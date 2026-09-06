@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}الأمنيات{% endblock %}
+{% block content %}
+<p class="app-subtitle" style="margin-bottom:10px;">أشياء نبوا نشريها</p>
+
+{% for item in items %}
+<div class="list-row">
+  <div class="row-main {{ 'done' if item.done else '' }}">
+    <form method="POST" action="{{ url_for('wishlist_toggle', item_id=item.id) }}">
+      <button type="submit" class="checkbox-btn {{ 'checked' if item.done else '' }}">
+        <i class="ti {{ 'ti-square-check' if item.done else 'ti-square' }}"></i>
+      </button>
+    </form>
+    <div>
+      <div class="item-name">{{ item.name }}</div>
+      <span class="badge priority-{{ item.priority }}">أولوية {{ item.priority }}</span>
+    </div>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px;">
+    {% if item.price_estimate %}<span class="app-subtitle" dir="ltr">{{ item.price_estimate | int }} د.ل</span>{% endif %}
+    <form method="POST" action="{{ url_for('wishlist_delete', item_id=item.id) }}">
+      <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
+    </form>
+  </div>
+</div>
+{% else %}
+<p class="app-subtitle">القائمة فاضية توا</p>
+{% endfor %}
+
+<form method="POST" action="{{ url_for('wishlist_add') }}" class="add-form">
+  <div class="field">
+    <label>إضافة شي نبوه</label>
+    <input type="text" name="name" placeholder="اسم الغرض" required>
+  </div>
+  <div class="field">
+    <select name="priority">
+      <option value="عالية">أولوية عالية</option>
+      <option value="متوسطة" selected>أولوية متوسطة</option>
+      <option value="منخفضة">أولوية منخفضة</option>
+    </select>
+  </div>
+  <div class="field">
+    <input type="number" name="price_estimate" placeholder="السعر التقديري (اختياري)" dir="ltr">
+  </div>
+  <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> إضافة</button>
+</form>
+{% endblock %}

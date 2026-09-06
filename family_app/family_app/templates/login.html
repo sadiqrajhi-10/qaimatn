@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}تسجيل الدخول{% endblock %}
+{% block content %}
+<div class="login-wrap">
+  <div class="login-card">
+    <div class="user-avatar teal-fill" style="width:64px;height:64px;font-size:26px;margin:0 auto 16px;">
+      <i class="ti ti-lock"></i>
+    </div>
+    <p class="app-title" style="font-size:19px;">قائمتنا</p>
+    <p class="app-subtitle" style="margin-bottom:24px;">أدخل كلمة السر باش تدخل</p>
+    <form method="POST">
+      <div class="field">
+        <input type="password" name="passcode" placeholder="كلمة السر" autofocus required>
+      </div>
+      <button type="submit" class="btn btn-primary">دخول</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
