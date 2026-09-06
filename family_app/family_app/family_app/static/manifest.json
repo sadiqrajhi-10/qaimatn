@@ -1,0 +1,10 @@
+{
+  "name": "قائمتنا",
+  "short_name": "قائمتنا",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#1D9E75",
+  "lang": "ar",
+  "dir": "rtl"
+}

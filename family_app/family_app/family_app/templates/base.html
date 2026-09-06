@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1D9E75">
+<title>{% block title %}قائمتنا{% endblock %}</title>
+<link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app-shell">
+  <header class="app-header">
+    <div>
+      <p class="app-title">قائمتنا</p>
+      {% if current_user %}<p class="app-subtitle">أهلاً {{ current_user }}</p>{% endif %}
+    </div>
+    {% if current_user %}
+    <div style="display:flex; align-items:center; gap:8px;">
+      <button id="push-btn" class="avatar-btn" onclick="enablePush()" title="فعّل الإشعارات" aria-label="فعّل الإشعارات">
+        <i class="ti ti-bell"></i>
+      </button>
+      <button class="avatar-btn {{ 'avatar-sadiq' if current_user == 'الصادق' else 'avatar-malak' }}"
+              onclick="location.href='{{ url_for('switch_user') }}'" title="تبديل المستخدم">
+        {{ current_user[0] }}
+      </button>
+    </div>
+    {% endif %}
+  </header>
+
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
+  {% endwith %}
+
+  <main class="app-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  {% if current_user %}
+  <nav class="bottom-nav">
+    <a href="{{ url_for('shopping') }}" class="{{ 'active' if request.endpoint == 'shopping' else '' }}">
+      <i class="ti ti-shopping-cart"></i><span>النواقص</span>
+    </a>
+    <a href="{{ url_for('wishlist') }}" class="{{ 'active' if request.endpoint == 'wishlist' else '' }}">
+      <i class="ti ti-heart"></i><span>أمنيات</span>
+    </a>
+    <a href="{{ url_for('meals') }}" class="{{ 'active' if request.endpoint == 'meals' else '' }}">
+      <i class="ti ti-tools-kitchen-2"></i><span>الأكل</span>
+    </a>
+  </nav>
+  {% endif %}
+</div>
+
+<script>
+const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
+
+function urlBase64ToUint8Array(base64String) {
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+  const rawData = atob(base64);
+  return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+}
+
+async function enablePush() {
+  const btn = document.getElementById('push-btn');
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+    alert('المتصفح ما يدعم الإشعارات');
+    return;
+  }
+  if (!VAPID_PUBLIC_KEY) {
+    alert('ميزة الإشعارات ما اتفعلت بعد بالسيرفر');
+    return;
+  }
+  try {
+    const permission = await Notification.requestPermission();
+    if (permission !== 'granted') return;
+    const reg = await navigator.serviceWorker.register('/static/sw.js');
+    await navigator.serviceWorker.ready;
+    let sub = await reg.pushManager.getSubscription();
+    if (!sub) {
+      sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+      });
+    }
+    await fetch('/push/subscribe', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sub)
+    });
+    if (btn) { btn.innerHTML = '<i class="ti ti-bell-ringing"></i>'; }
+  } catch (err) {
+    alert('ما قدرنا نفعّل الإشعارات، حاول مرة ثانية');
+  }
+}
+</script>
+</body>
+</html>

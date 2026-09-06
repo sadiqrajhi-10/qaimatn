@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}الأكل{% endblock %}
+{% block content %}
+<p class="app-subtitle" style="margin-bottom:14px;">اقتراحات الأكل</p>
+
+{% if suggestion %}
+<div class="suggestion-card">
+  <p class="label">{{ suggestion.source }}</p>
+  <p class="text">{{ suggestion.text }}</p>
+</div>
+{% endif %}
+
+<form method="POST" action="{{ url_for('meals_suggest') }}" class="add-form" style="margin-bottom:24px;">
+  <div class="field">
+    <label>اقترح لي أكلة</label>
+    <select name="meal_type">
+      <option value="غداء">غداء</option>
+      <option value="عشاء" selected>عشاء</option>
+    </select>
+  </div>
+  <div class="field">
+    <input type="text" name="available" placeholder="شنو متوفر عندكم؟ (اختياري - لاقتراح AI)">
+  </div>
+  <button type="submit" class="btn btn-primary"><i class="ti ti-tools-kitchen-2"></i> اقترح لي</button>
+</form>
+
+<p class="app-subtitle" style="margin-bottom:8px;">وصفاتكم المحفوظة</p>
+{% for meal in saved_meals %}
+<div class="list-row">
+  <div>
+    <div class="item-name">{{ meal.name }}</div>
+    {% if meal.ingredients %}<span class="badge badge-amber">{{ meal.ingredients }}</span>{% endif %}
+  </div>
+  <span class="badge badge-coral">{{ meal.meal_type }}</span>
+</div>
+{% else %}
+<p class="app-subtitle">ما ضفتوا وصفات توا</p>
+{% endfor %}
+
+<form method="POST" action="{{ url_for('meals_add') }}" class="add-form">
+  <div class="field">
+    <label>إضافة وصفة لقائمتكم</label>
+    <input type="text" name="name" placeholder="اسم الأكلة" required>
+  </div>
+  <div class="field">
+    <select name="meal_type">
+      <option value="غداء">غداء</option>
+      <option value="عشاء">عشاء</option>
+    </select>
+  </div>
+  <div class="field">
+    <input type="text" name="ingredients" placeholder="المكونات الرئيسية (اختياري)">
+  </div>
+  <button type="submit" class="btn btn-ghost" style="width:100%;"><i class="ti ti-plus"></i> إضافة وصفة</button>
+</form>
+{% endblock %}
