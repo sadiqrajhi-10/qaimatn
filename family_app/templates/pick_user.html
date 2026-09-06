@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}مين بيستخدم؟{% endblock %}
+{% block content %}
+<div style="text-align:center; padding-top:30px;">
+  <p class="app-title" style="font-size:16px;">مين بيستخدم القائمة؟</p>
+  <p class="app-subtitle">اختر حسابك للدخول</p>
+  <form method="POST">
+    <div class="user-pick-grid">
+      {% for u in users %}
+      <button type="submit" name="user" value="{{ u }}"
+              class="user-card {{ 'teal' if u == 'الصادق' else 'coral' }}">
+        <div class="user-avatar {{ 'teal-fill' if u == 'الصادق' else 'coral-fill' }}">{{ u[0] }}</div>
+        <div class="user-name {{ 'teal-text' if u == 'الصادق' else 'coral-text' }}">{{ u }}</div>
+      </button>
+      {% endfor %}
+    </div>
+  </form>
+</div>
+{% endblock %}

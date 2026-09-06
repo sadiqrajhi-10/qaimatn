@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}النواقص{% endblock %}
+{% block content %}
+<p class="app-subtitle" style="margin-bottom:10px;">قائمة النواقص</p>
+
+{% for item in items %}
+<div class="list-row">
+  <div class="row-main {{ 'done' if item.done else '' }}">
+    <form method="POST" action="{{ url_for('shopping_toggle', item_id=item.id) }}">
+      <button type="submit" class="checkbox-btn {{ 'checked' if item.done else '' }}">
+        <i class="ti {{ 'ti-square-check' if item.done else 'ti-square' }}"></i>
+      </button>
+    </form>
+    <span class="item-name">{{ item.name }}</span>
+  </div>
+  <div style="display:flex; align-items:center; gap:8px;">
+    <span class="badge badge-teal">{{ item.category }}</span>
+    <form method="POST" action="{{ url_for('shopping_delete', item_id=item.id) }}">
+      <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
+    </form>
+  </div>
+</div>
+{% else %}
+<p class="app-subtitle">ما فيه نواقص دلوقتي 🎉</p>
+{% endfor %}
+
+<form method="POST" action="{{ url_for('shopping_add') }}" class="add-form">
+  <div class="field">
+    <label>إضافة نقص جديد</label>
+    <input type="text" name="name" placeholder="اسم الغرض" required>
+  </div>
+  <div class="field">
+    <select name="category">
+      <option value="بقالة">بقالة</option>
+      <option value="منزل">منزل</option>
+      <option value="عناية">عناية شخصية</option>
+      <option value="عام">عام</option>
+    </select>
+  </div>
+  <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> إضافة</button>
+</form>
+{% endblock %}
