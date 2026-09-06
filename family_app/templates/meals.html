@@ -3,6 +3,7 @@
 {% block content %}
 <p class="app-subtitle" style="margin-bottom:14px;">اقتراحات الأكل</p>
 
+{# ---------- قسم 1: بحث بالمكونات (AI) ---------- #}
 {% if suggestion %}
 <div class="suggestion-card">
   <p class="label">{{ suggestion.source }}</p>
@@ -10,47 +11,76 @@
 </div>
 {% endif %}
 
-<form method="POST" action="{{ url_for('meals_suggest') }}" class="add-form" style="margin-bottom:24px;">
+<form method="POST" action="{{ url_for('meals_suggest') }}" class="add-form" style="margin-bottom:20px;">
   <div class="field">
-    <label>اقترح لي أكلة</label>
+    <label>شنو متوفر عندكم؟</label>
+    <input type="text" name="available" placeholder="مثلا: رز، دجاج" required>
+  </div>
+  <div class="field">
     <select name="meal_type">
+      <option value="فطور">فطور</option>
       <option value="غداء">غداء</option>
       <option value="عشاء" selected>عشاء</option>
     </select>
   </div>
-  <div class="field">
-    <input type="text" name="available" placeholder="شنو متوفر عندكم؟ (اختياري - لاقتراح AI)">
-  </div>
-  <button type="submit" class="btn btn-primary"><i class="ti ti-tools-kitchen-2"></i> اقترح لي</button>
+  <button type="submit" class="btn btn-primary"><i class="ti ti-search"></i> دور لي وصفة</button>
 </form>
 
-<p class="app-subtitle" style="margin-bottom:8px;">وصفاتكم المحفوظة</p>
-{% for meal in saved_meals %}
-<div class="list-row">
-  <div>
-    <div class="item-name">{{ meal.name }}</div>
-    {% if meal.ingredients %}<span class="badge badge-amber">{{ meal.ingredients }}</span>{% endif %}
-  </div>
-  <span class="badge badge-coral">{{ meal.meal_type }}</span>
-</div>
-{% else %}
-<p class="app-subtitle">ما ضفتوا وصفات توا</p>
-{% endfor %}
+<div style="border-top:1px solid var(--border); margin-bottom:20px;"></div>
 
-<form method="POST" action="{{ url_for('meals_add') }}" class="add-form">
+{# ---------- قسم 2: اقتراح وجبة + رد الطرف الثاني ---------- #}
+<p class="app-subtitle" style="margin-bottom:8px;">اقتراح وجبة</p>
+
+{% if proposal %}
+  {% if proposal.status == "قيد الانتظار" %}
+    {% if proposal.proposed_by == current_user %}
+    <div class="suggestion-card" style="background:var(--amber-light);">
+      <p class="label" style="color:var(--amber-dark);">بانتظار الرد</p>
+      <p class="text" style="color:var(--amber-dark);">اقترحت "{{ proposal.name }}" لـ{{ proposal.meal_type }}</p>
+    </div>
+    <form method="POST" action="{{ url_for('meals_dismiss') }}">
+      <button type="submit" class="btn btn-ghost" style="width:100%;">إلغاء الاقتراح</button>
+    </form>
+    {% else %}
+    <div class="suggestion-card">
+      <p class="label">{{ proposal.proposed_by }} اقترح</p>
+      <p class="text">"{{ proposal.name }}" لـ{{ proposal.meal_type }}</p>
+    </div>
+    <form method="POST" action="{{ url_for('meals_respond') }}">
+      <div class="field">
+        <input type="text" name="note" placeholder="لو ناقصكم شي، اكتبوه هنا (اختياري)">
+      </div>
+      <div style="display:flex; gap:8px;">
+        <button type="submit" name="action" value="accept" class="btn btn-primary" style="flex:1;">حاضر</button>
+        <button type="submit" name="action" value="reject" class="btn btn-ghost" style="flex:1;">ما نقدرش</button>
+      </div>
+    </form>
+    {% endif %}
+  {% else %}
+    <div class="suggestion-card {{ '' if proposal.status == 'حاضر' else '' }}" style="background:{{ 'var(--teal-light)' if proposal.status == 'حاضر' else 'var(--coral-light)' }};">
+      <p class="label" style="color:{{ 'var(--teal-dark)' if proposal.status == 'حاضر' else 'var(--coral-dark)' }};">"{{ proposal.name }}" لـ{{ proposal.meal_type }}</p>
+      <p class="text" style="color:{{ 'var(--teal-dark)' if proposal.status == 'حاضر' else 'var(--coral-dark)' }};">
+        {{ proposal.status }}{% if proposal.response_note %} - {{ proposal.response_note }}{% endif %}
+      </p>
+    </div>
+    <form method="POST" action="{{ url_for('meals_dismiss') }}">
+      <button type="submit" class="btn btn-ghost" style="width:100%;">تم</button>
+    </form>
+  {% endif %}
+{% else %}
+<form method="POST" action="{{ url_for('meals_propose') }}" class="add-form">
   <div class="field">
-    <label>إضافة وصفة لقائمتكم</label>
+    <label>اقترح وجبة على {{ 'ملاك' if current_user == 'الصادق' else 'الصادق' }}</label>
     <input type="text" name="name" placeholder="اسم الأكلة" required>
   </div>
   <div class="field">
     <select name="meal_type">
+      <option value="فطور">فطور</option>
       <option value="غداء">غداء</option>
-      <option value="عشاء">عشاء</option>
+      <option value="عشاء" selected>عشاء</option>
     </select>
   </div>
-  <div class="field">
-    <input type="text" name="ingredients" placeholder="المكونات الرئيسية (اختياري)">
-  </div>
-  <button type="submit" class="btn btn-ghost" style="width:100%;"><i class="ti ti-plus"></i> إضافة وصفة</button>
+  <button type="submit" class="btn btn-primary"><i class="ti ti-send"></i> اقترح</button>
 </form>
+{% endif %}
 {% endblock %}

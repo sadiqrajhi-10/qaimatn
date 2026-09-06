@@ -97,7 +97,10 @@ async function enablePush() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(sub)
     });
-    if (btn) { btn.innerHTML = '<i class="ti ti-bell-ringing"></i>'; }
+    if (btn) {
+      btn.innerHTML = '<i class="ti ti-bell-ringing"></i>';
+      btn.classList.add('push-enabled');
+    }
   } catch (err) {
     alert('ما قدرنا نفعّل الإشعارات، حاول مرة ثانية');
   }

@@ -5,23 +5,22 @@
 
 {% for item in items %}
 <div class="list-row">
-  <div class="row-main {{ 'done' if item.done else '' }}">
-    <form method="POST" action="{{ url_for('wishlist_toggle', item_id=item.id) }}">
-      <button type="submit" class="checkbox-btn {{ 'checked' if item.done else '' }}">
-        <i class="ti {{ 'ti-square-check' if item.done else 'ti-square' }}"></i>
-      </button>
-    </form>
-    <div>
-      <div class="item-name">{{ item.name }}</div>
-      <span class="badge priority-{{ item.priority }}">أولوية {{ item.priority }}</span>
-    </div>
-  </div>
-  <div style="display:flex; align-items:center; gap:8px;">
-    {% if item.price_estimate %}<span class="app-subtitle" dir="ltr">{{ item.price_estimate | int }} د.ل</span>{% endif %}
-    <form method="POST" action="{{ url_for('wishlist_delete', item_id=item.id) }}">
-      <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
-    </form>
-  </div>
+  <form method="POST" action="{{ url_for('wishlist_toggle', item_id=item.id) }}" style="flex:1;">
+    <button type="submit" class="row-click-btn {{ 'row-fading' if item.done else '' }}">
+      <span class="row-info">
+        <span class="item-name">{{ item.name }}</span>
+        <span class="item-note">
+          أضافه {{ item.added_by }} - {{ item.created_at | local_date }}
+          {% if item.done and item.bought_by %} · اشتراه {{ item.bought_by }}{% endif %}
+        </span>
+        <span class="badge priority-{{ item.priority }}">أولوية {{ item.priority }}</span>
+      </span>
+      {% if item.price_estimate %}<span class="app-subtitle" dir="ltr">{{ item.price_estimate | int }} د.ل</span>{% endif %}
+    </button>
+  </form>
+  <form method="POST" action="{{ url_for('wishlist_delete', item_id=item.id) }}">
+    <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
+  </form>
 </div>
 {% else %}
 <p class="app-subtitle">القائمة فاضية توا</p>
