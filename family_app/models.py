@@ -14,8 +14,32 @@ class ShoppingItem(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
     category = db.Column(db.String(60), nullable=False, default="عام")
+    note = db.Column(db.String(300), nullable=True)
     done = db.Column(db.Boolean, nullable=False, default=False)
+    done_at = db.Column(db.DateTime(timezone=True), nullable=True)
     added_by = db.Column(db.String(30), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=now_utc)
+
+
+class SharedNote(db.Model):
+    """ملاحظة عامة وحدة يشوفها الطرفين، مش خاصة بغرض معين."""
+    __tablename__ = "shared_note"
+
+    id = db.Column(db.Integer, primary_key=True)
+    content = db.Column(db.String(500), nullable=False, default="")
+    updated_by = db.Column(db.String(30), nullable=True)
+    updated_at = db.Column(db.DateTime(timezone=True), default=now_utc, onupdate=now_utc)
+
+
+class PushSubscription(db.Model):
+    """بيانات اشتراك الإشعارات لكل مستخدم على كل جهاز."""
+    __tablename__ = "push_subscriptions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user = db.Column(db.String(30), nullable=False)
+    endpoint = db.Column(db.String(500), nullable=False, unique=True)
+    p256dh = db.Column(db.String(200), nullable=False)
+    auth = db.Column(db.String(200), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=now_utc)
 
 

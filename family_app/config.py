@@ -18,3 +18,8 @@ class Config:
     ALLOWED_USERS = ["الصادق", "ملاك"]
 
     GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
+
+    # مفاتيح إشعارات الويب (Web Push) - راجع رسالة الشات لقيمهم
+    VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
+    VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
+    VAPID_CLAIMS_EMAIL = os.environ.get("VAPID_CLAIMS_EMAIL", "mailto:example@example.com")
