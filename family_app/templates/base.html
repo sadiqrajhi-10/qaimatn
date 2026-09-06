@@ -31,16 +31,8 @@
     {% endif %}
   </header>
 
-  {% with messages = get_flashed_messages() %}
-    {% if messages %}<div class="flash">{{ messages[0] }}</div>{% endif %}
-  {% endwith %}
-
-  <main class="app-content">
-    {% block content %}{% endblock %}
-  </main>
-
   {% if current_user %}
-  <nav class="bottom-nav">
+  <nav class="top-nav">
     <a href="{{ url_for('shopping') }}" class="{{ 'active' if request.endpoint == 'shopping' else '' }}">
       <i class="ti ti-shopping-cart"></i><span>النواقص</span>
     </a>
@@ -52,9 +44,23 @@
     </a>
   </nav>
   {% endif %}
+
+  <main class="app-content">
+    {% block content %}{% endblock %}
+  </main>
 </div>
 
+{% with messages = get_flashed_messages(with_categories=true) %}
+  {% for category, message in messages %}
+  <div class="toast {{ 'toast-success' if category == 'success' else 'toast-error' }}">{{ message }}</div>
+  {% endfor %}
+{% endwith %}
+
 <script>
+document.querySelectorAll('.toast').forEach(function (el) {
+  setTimeout(function () { el.remove(); }, 2600);
+});
+
 const VAPID_PUBLIC_KEY = "{{ vapid_public_key }}";
 
 function urlBase64ToUint8Array(base64String) {
@@ -97,5 +103,18 @@ async function enablePush() {
   }
 }
 </script>
+
+{% if current_user %}
+<script>
+// تحديث تلقائي كل 15 ثانية عشان تبان إضافات الطرف الثاني بدون ما تسووا Refresh يدوي
+setInterval(function () {
+  if (document.visibilityState !== 'visible') return;
+  var active = document.activeElement;
+  var tag = active ? active.tagName : '';
+  if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  location.reload();
+}, 15000);
+</script>
+{% endif %}
 </body>
 </html>

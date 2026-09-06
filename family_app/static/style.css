@@ -55,25 +55,32 @@ body {
 .avatar-sadiq { background: var(--teal-light); color: var(--teal-dark); }
 .avatar-malak { background: var(--coral-light); color: var(--coral-dark); }
 
-.flash {
-  margin: 10px 20px 0; padding: 8px 14px;
-  background: var(--danger-light); color: var(--danger-dark);
-  border-radius: var(--radius); font-size: 13px;
-}
+.app-content { flex: 1; padding: 4px 20px 30px; }
 
-.app-content { flex: 1; padding: 16px 20px 30px; }
-
-.bottom-nav {
-  position: sticky; bottom: 0; display: flex;
-  background: #fff; border-top: 1px solid var(--border);
+.top-nav {
+  display: flex; gap: 4px; background: #f2f1ec;
+  border-radius: 14px; padding: 4px; margin: 12px 20px 4px;
 }
-.bottom-nav a {
-  flex: 1; text-align: center; padding: 10px 0 8px;
-  text-decoration: none; color: var(--text-muted); font-size: 11px;
+.top-nav a {
+  flex: 1; text-align: center; padding: 9px 0;
+  text-decoration: none; color: var(--text-secondary); font-size: 12px;
   display: flex; flex-direction: column; align-items: center; gap: 2px;
+  border-radius: 10px; transition: background 0.15s ease, color 0.15s ease;
 }
-.bottom-nav a .ti { font-size: 20px; }
-.bottom-nav a.active { color: var(--teal); }
+.top-nav a .ti { font-size: 19px; }
+.top-nav a.active { background: #fff; color: var(--teal); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+
+.toast {
+  position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
+  color: #fff; padding: 11px 20px; border-radius: 999px; font-size: 13px;
+  z-index: 999; max-width: 85%; text-align: center; pointer-events: none;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  animation: toast-in 0.25s ease, toast-out 0.25s ease 2.2s forwards;
+}
+.toast-success { background: #0F6E56; }
+.toast-error { background: #791F1F; }
+@keyframes toast-in { from { opacity: 0; transform: translateX(-50%) translateY(12px); } to { opacity: 1; transform: translateX(-50%) translateY(0); } }
+@keyframes toast-out { to { opacity: 0; } }
 
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }

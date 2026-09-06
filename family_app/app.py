@@ -21,8 +21,8 @@ db.init_app(app)
 with app.app_context():
     db.create_all()
 
-# بعد ما يتحدد الغرض "تم شراؤه"، يفضل بان بشكل باهت لهالمدة قبل ما يختفي نهائيًا
-FADE_HOURS = 6
+# بعد ما يتحدد الغرض "تم شراؤه"، يفضل بان باهت لهالمدة، وبعدها يتحذف نهائيًا من القاعدة
+FADE_MINUTES = 5
 
 
 def added_verb(user):
@@ -125,13 +125,13 @@ def index():
 @app.route("/shopping", methods=["GET"])
 @user_required
 def shopping():
-    cutoff = now_utc() - timedelta(hours=FADE_HOURS)
-    items = (
-        ShoppingItem.query
-        .filter(db.or_(ShoppingItem.done.is_(False), ShoppingItem.done_at > cutoff))
-        .order_by(ShoppingItem.done, ShoppingItem.created_at.desc())
-        .all()
-    )
+    cutoff = now_utc() - timedelta(minutes=FADE_MINUTES)
+    ShoppingItem.query.filter(
+        ShoppingItem.done.is_(True), ShoppingItem.done_at < cutoff
+    ).delete(synchronize_session=False)
+    db.session.commit()
+
+    items = ShoppingItem.query.order_by(ShoppingItem.done, ShoppingItem.created_at.desc()).all()
     category_rows = (
         db.session.query(ShoppingItem.category, db.func.min(ShoppingItem.created_at))
         .group_by(ShoppingItem.category)
@@ -152,6 +152,7 @@ def shopping_add():
     if name:
         db.session.add(ShoppingItem(name=name, category=category, note=note, added_by=session["user"]))
         db.session.commit()
+        flash(f'تمت إضافة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} "{name}" للنواقص')
     return redirect(url_for("shopping"))
 
@@ -163,6 +164,8 @@ def shopping_toggle(item_id):
     item.done = not item.done
     item.done_at = now_utc() if item.done else None
     db.session.commit()
+    if item.done:
+        flash(f'تم شراء "{item.name}" - بيتحذف تلقائي بعد {FADE_MINUTES} دقايق', "success")
     return redirect(url_for("shopping"))
 
 
@@ -186,6 +189,7 @@ def note_update():
     note.content = content
     note.updated_by = session["user"]
     db.session.commit()
+    flash("تم حفظ الملاحظة", "success")
     return redirect(url_for("shopping"))
 
 
@@ -231,6 +235,7 @@ def wishlist_add():
     if name:
         db.session.add(WishlistItem(name=name, priority=priority, price_estimate=price, added_by=session["user"]))
         db.session.commit()
+        flash(f'تمت إضافة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} "{name}" للأمنيات')
     return redirect(url_for("wishlist"))
 
@@ -273,6 +278,7 @@ def meals_add():
         db.session.add(Meal(name=name, meal_type=meal_type, ingredients=ingredients,
                              source="يدوي", added_by=session["user"]))
         db.session.commit()
+        flash(f'تمت إضافة وصفة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} وصفة "{name}"')
     return redirect(url_for("meals"))
 
