@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+{% block title %}النواقص{% endblock %}
+{% block content %}
+<p class="app-subtitle" style="margin-bottom:10px;">قائمة النواقص</p>
+
+<form method="POST" action="{{ url_for('note_update') }}" class="shared-note">
+  <textarea name="content" rows="2" placeholder="ملاحظة عامة لكم الاثنين (اختياري)">{{ shared_note.content if shared_note else '' }}</textarea>
+  {% if shared_note and shared_note.updated_by %}
+  <p class="note-meta">آخر تحديث: {{ shared_note.updated_by }}</p>
+  {% endif %}
+  <button type="submit" class="btn btn-ghost" style="width:100%;">حفظ الملاحظة</button>
+</form>
+
+{% for item in items %}
+<div class="list-row">
+  <form method="POST" action="{{ url_for('shopping_toggle', item_id=item.id) }}" style="flex:1;">
+    <button type="submit" class="row-click-btn {{ 'row-fading' if item.done else '' }}">
+      <span>
+        <span class="item-name">{{ item.name }}</span>
+        {% if item.note %}<span class="item-note">{{ item.note }}</span>{% endif %}
+      </span>
+      <span class="badge badge-teal">{{ item.category }}</span>
+    </button>
+  </form>
+  <form method="POST" action="{{ url_for('shopping_delete', item_id=item.id) }}">
+    <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
+  </form>
+</div>
+{% else %}
+<p class="app-subtitle">ما فيه نواقص توا 🎉</p>
+{% endfor %}
+
+<form method="POST" action="{{ url_for('shopping_add') }}" class="add-form">
+  <div class="field">
+    <label>إضافة نقص جديد</label>
+    <input type="text" name="name" placeholder="اسم الغرض" required>
+  </div>
+  <div class="field">
+    <label>الفئة</label>
+    <input type="text" name="category" list="category-options" placeholder="اكتب فئة جديدة أو اختار وحدة قديمة">
+    <datalist id="category-options">
+      {% for c in categories %}
+      <option value="{{ c }}">
+      {% endfor %}
+    </datalist>
+  </div>
+  <div class="field">
+    <label>ملاحظة على هالغرض (اختياري)</label>
+    <input type="text" name="note" placeholder="مثلا: خذ النوع قليل الدسم">
+  </div>
+  <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> إضافة</button>
+</form>
+{% endblock %}
