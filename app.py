@@ -1,4 +1,3 @@
-import random
 import json as json_lib
 from datetime import timedelta
 from functools import wraps
@@ -6,7 +5,7 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 from config import Config
-from models import db, ShoppingItem, WishlistItem, Meal, SharedNote, PushSubscription, now_utc
+from models import db, ShoppingItem, WishlistItem, MealProposal, SharedNote, PushSubscription, now_utc
 
 try:
     from pywebpush import webpush, WebPushException
@@ -285,23 +284,68 @@ def wishlist_delete(item_id):
 @app.route("/meals", methods=["GET"])
 @user_required
 def meals():
-    saved_meals = Meal.query.filter_by(source="يدوي").order_by(Meal.created_at.desc()).all()
+    proposal = MealProposal.query.first()
     suggestion = session.pop("last_suggestion", None)
-    return render_template("meals.html", saved_meals=saved_meals, suggestion=suggestion)
+    return render_template("meals.html", proposal=proposal, suggestion=suggestion)
 
 
-@app.route("/meals/add", methods=["POST"])
+@app.route("/meals/propose", methods=["POST"])
 @user_required
-def meals_add():
+def meals_propose():
+    existing = MealProposal.query.first()
+    if existing and existing.status == "قيد الانتظار":
+        flash("فيه اقتراح قيد الانتظار خلاص - لازم يترد عليه أول", "success")
+        return redirect(url_for("meals"))
+
     name = request.form.get("name", "").strip()
     meal_type = request.form.get("meal_type", "عشاء")
-    ingredients = request.form.get("ingredients", "").strip()
-    if name:
-        db.session.add(Meal(name=name, meal_type=meal_type, ingredients=ingredients,
-                             source="يدوي", added_by=session["user"]))
+    if not name:
+        return redirect(url_for("meals"))
+
+    if existing:
+        db.session.delete(existing)
         db.session.commit()
-        flash(f'تمت إضافة وصفة "{name}"', "success")
-        notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} وصفة "{name}"')
+
+    db.session.add(MealProposal(name=name, meal_type=meal_type, proposed_by=session["user"]))
+    db.session.commit()
+    notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} "{name}" لـ{meal_type} - جاوب بسرعة!')
+    return redirect(url_for("meals"))
+
+
+@app.route("/meals/respond", methods=["POST"])
+@user_required
+def meals_respond():
+    proposal = MealProposal.query.first()
+    if not proposal or proposal.status != "قيد الانتظار" or proposal.proposed_by == session["user"]:
+        return redirect(url_for("meals"))
+
+    action = request.form.get("action")
+    note = request.form.get("note", "").strip()
+
+    if action == "accept":
+        proposal.status = "حاضر"
+        notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} حاضر لـ"{proposal.name}" ✅')
+    elif action == "reject":
+        proposal.status = "ما نقدرش"
+        proposal.response_note = note or None
+        msg = f'{session["user"]} ما تقدرش لـ"{proposal.name}"'
+        if note:
+            msg += f" - {note}"
+        notify_other_user(session["user"], "قائمتنا", msg)
+        if note:
+            db.session.add(ShoppingItem(name=note, category="من الأكل", added_by=session["user"]))
+    proposal.responded_at = now_utc()
+    db.session.commit()
+    return redirect(url_for("meals"))
+
+
+@app.route("/meals/dismiss", methods=["POST"])
+@user_required
+def meals_dismiss():
+    proposal = MealProposal.query.first()
+    if proposal:
+        db.session.delete(proposal)
+        db.session.commit()
     return redirect(url_for("meals"))
 
 
@@ -311,23 +355,18 @@ def meals_suggest():
     meal_type = request.form.get("meal_type", "عشاء")
     available = request.form.get("available", "").strip()
 
-    ai_text = get_ai_suggestion(available, meal_type) if available else None
+    if not available:
+        session["last_suggestion"] = {"text": "اكتب المكونات المتوفرة عندكم أول", "source": "تنبيه"}
+        return redirect(url_for("meals"))
 
+    ai_text = get_ai_suggestion(available, meal_type)
     if ai_text:
-        session["last_suggestion"] = {"text": ai_text, "source": "AI"}
+        session["last_suggestion"] = {"text": ai_text, "source": "اقتراح AI"}
     else:
-        candidates = Meal.query.filter_by(source="يدوي", meal_type=meal_type).all()
-        if candidates:
-            pick = random.choice(candidates)
-            session["last_suggestion"] = {
-                "text": f"{pick.name}" + (f" ({pick.ingredients})" if pick.ingredients else ""),
-                "source": "من قائمتكم",
-            }
-        else:
-            session["last_suggestion"] = {
-                "text": "ما فيه اقتراحات بعد - ضيفوا وصفة أو اكتبوا المكونات المتوفرة",
-                "source": "تنبيه",
-            }
+        session["last_suggestion"] = {
+            "text": "ما قدرنا نجيب اقتراح دلوقتي - تأكد إن مفتاح Gemini شغال، أو جرب مرة ثانية",
+            "source": "تنبيه",
+        }
     return redirect(url_for("meals"))
 
 
