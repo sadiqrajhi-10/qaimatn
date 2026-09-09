@@ -15,6 +15,7 @@ class ShoppingItem(db.Model):
     name = db.Column(db.String(120), nullable=False)
     category = db.Column(db.String(60), nullable=False, default="عام")
     note = db.Column(db.String(300), nullable=True)
+    photo_url = db.Column(db.String(500), nullable=True)
     done = db.Column(db.Boolean, nullable=False, default=False)
     done_at = db.Column(db.DateTime(timezone=True), nullable=True)
     added_by = db.Column(db.String(30), nullable=False)

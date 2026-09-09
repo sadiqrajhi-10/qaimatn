@@ -1,4 +1,6 @@
 import json as json_lib
+import uuid
+import requests
 from datetime import timedelta
 from functools import wraps
 
@@ -35,6 +37,34 @@ def local_date(dt):
 
 def added_verb(user):
     return "ضافت" if user == "ملاك" else "ضاف"
+
+
+def upload_photo(file_storage):
+    """يرفع صورة لـ Supabase Storage ويرجع الرابط العام. يرجع None لو ما فيه ملف أو الإعدادات ناقصة."""
+    if not file_storage or not file_storage.filename:
+        return None
+    supabase_url = app.config.get("SUPABASE_URL")
+    service_key = app.config.get("SUPABASE_SERVICE_KEY")
+    bucket = app.config.get("SUPABASE_STORAGE_BUCKET", "photos")
+    if not supabase_url or not service_key:
+        return None
+    ext = file_storage.filename.rsplit(".", 1)[-1].lower() if "." in file_storage.filename else "jpg"
+    filename = f"{uuid.uuid4().hex}.{ext}"
+    try:
+        resp = requests.post(
+            f"{supabase_url}/storage/v1/object/{bucket}/{filename}",
+            headers={
+                "Authorization": f"Bearer {service_key}",
+                "Content-Type": file_storage.mimetype or "application/octet-stream",
+            },
+            data=file_storage.read(),
+            timeout=15,
+        )
+        if resp.status_code in (200, 201):
+            return f"{supabase_url}/storage/v1/object/public/{bucket}/{filename}"
+    except Exception:
+        pass
+    return None
 
 
 def notify_other_user(current_user, title, body):
@@ -157,8 +187,9 @@ def shopping_add():
     name = request.form.get("name", "").strip()
     category = request.form.get("category", "").strip() or "عام"
     note = request.form.get("note", "").strip() or None
+    photo_url = upload_photo(request.files.get("photo"))
     if name:
-        db.session.add(ShoppingItem(name=name, category=category, note=note, added_by=session["user"]))
+        db.session.add(ShoppingItem(name=name, category=category, note=note, photo_url=photo_url, added_by=session["user"]))
         db.session.commit()
         flash(f'تمت إضافة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} "{name}" للنواقص')

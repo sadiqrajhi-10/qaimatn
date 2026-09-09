@@ -5,3 +5,4 @@ gunicorn==22.0.0
 python-dotenv==1.0.1
 google-generativeai==0.8.3
 pywebpush==2.5.0
+requests==2.32.3

@@ -15,9 +15,12 @@
 <div class="list-row">
   <form method="POST" action="{{ url_for('shopping_toggle', item_id=item.id) }}" style="flex:1;">
     <button type="submit" class="row-click-btn {{ 'row-fading' if item.done else '' }}">
-      <span>
-        <span class="item-name">{{ item.name }}</span>
-        {% if item.note %}<span class="item-note">{{ item.note }}</span>{% endif %}
+      <span style="display:flex; align-items:center; gap:10px;">
+        {% if item.photo_url %}<img src="{{ item.photo_url }}" class="item-photo" alt="">{% endif %}
+        <span>
+          <span class="item-name">{{ item.name }}</span>
+          {% if item.note %}<span class="item-note">{{ item.note }}</span>{% endif %}
+        </span>
       </span>
       <span class="badge badge-teal">{{ item.category }}</span>
     </button>
@@ -30,7 +33,7 @@
 <p class="app-subtitle">ما فيه نواقص توا 🎉</p>
 {% endfor %}
 
-<form method="POST" action="{{ url_for('shopping_add') }}" class="add-form">
+<form method="POST" action="{{ url_for('shopping_add') }}" class="add-form" enctype="multipart/form-data">
   <div class="field">
     <label>إضافة نقص جديد</label>
     <input type="text" name="name" placeholder="اسم الغرض" required>
@@ -47,6 +50,10 @@
   <div class="field">
     <label>ملاحظة على هالغرض (اختياري)</label>
     <input type="text" name="note" placeholder="مثلا: خذ النوع قليل الدسم">
+  </div>
+  <div class="field">
+    <label>صورة (اختياري)</label>
+    <input type="file" name="photo" accept="image/*" capture="environment">
   </div>
   <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> إضافة</button>
 </form>
