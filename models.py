@@ -66,7 +66,7 @@ class MealProposal(db.Model):
     name = db.Column(db.String(150), nullable=False)
     meal_type = db.Column(db.String(10), nullable=False, default="عشاء")  # فطور / غداء / عشاء
     proposed_by = db.Column(db.String(30), nullable=False)
-    status = db.Column(db.String(10), nullable=False, default="قيد الانتظار")  # قيد الانتظار / حاضر / ما نقدرش
+            status = db.Column(db.String(20), nullable=False, default="قيد الانتظار")  # قيد الانتظار / حاضر / ما نقدرش
     response_note = db.Column(db.String(300), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=now_utc)
     responded_at = db.Column(db.DateTime(timezone=True), nullable=True)
