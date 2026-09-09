@@ -158,6 +158,13 @@ def index():
     return redirect(url_for("shopping"))
 
 
+@app.route("/sw.js")
+def service_worker():
+    resp = app.send_static_file("sw.js")
+    resp.headers["Service-Worker-Allowed"] = "/"
+    return resp
+
+
 # ---------- قائمة النواقص ----------
 
 @app.route("/shopping", methods=["GET"])
