@@ -13,7 +13,7 @@ class ShoppingItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name  = db.Column(db.String(120), nullable=False)
-    category = db.Column(db.String(60), nullable=False, default="XCATX")
+    category = db.Column(db.String(60), nullable=False, default="عام")
     note = db.Column(db.String(300), nullable=True)
     photo_url = db.Column(db.String(500), nullable=True)
     done = db.Column(db.Boolean, nullable=False, default=False)
@@ -47,7 +47,7 @@ class WishlistItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(120), nullable=False)
-    priority = db.Column(db.String(10), nullable=False, default="XPRIX")
+    priority = db.Column(db.String(10), nullable=False, default="متوسطة")
     price_estimate = db.Column(db.Float, nullable=True)
     done = db.Column(db.Boolean, nullable=False, default=False)
     done_at = db.Column(db.DateTime(timezone=True), nullable=True)
@@ -61,9 +61,9 @@ class MealProposal(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(150), nullable=False)
-    meal_type = db.Column(db.String(10), nullable=False, default="XMEALX")
+    meal_type = db.Column(db.String(10), nullable=False, default="عشاء")
     proposed_by = db.Column(db.String(30), nullable=False)
-    status = db.Column(db.String(20), nullable=False, default="XSTATUSX")
+    status = db.Column(db.String(20), nullable=False, default="قيد الانتظار")
     response_note = db.Column(db.String(300), nullable=True)
     created_at = db.Column(db.DateTime(timezone=True), default=now_utc)
     responded_at = db.Column(db.DateTime(timezone=True), nullable=True)
