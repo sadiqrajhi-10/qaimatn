@@ -64,7 +64,7 @@
     function closeLightbox() {
       document.getElementById('lightbox-overlay').classList.remove('open');
     }
-        </
+        </script>
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% for category, message in messages %}
   <div class="toast {{ 'toast-success' if category == 'success' else 'toast-error' }}">{{ message }}</div>
