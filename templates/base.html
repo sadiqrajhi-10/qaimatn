@@ -50,6 +50,21 @@
   </main>
 </div>
 
+  <div id="lightbox-overlay" class="lightbox-overlay" onclick="closeLightbox()">
+    <img id="lightbox-img" src="" alt="">
+  </div>
+
+  <script>
+    function openLightbox(event, url) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById('lightbox-img').src = url;
+      document.getElementById('lightbox-overlay').classList.add('open');
+    }
+    function closeLightbox() {
+      document.getElementById('lightbox-overlay').classList.remove('open');
+    }
+        </
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% for category, message in messages %}
   <div class="toast {{ 'toast-success' if category == 'success' else 'toast-error' }}">{{ message }}</div>
@@ -83,7 +98,7 @@ async function enablePush() {
   try {
     const permission = await Notification.requestPermission();
     if (permission !== 'granted') return;
-    const reg = await navigator.serviceWorker.register('/static/sw.js');
+    const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
     if (!sub) {
