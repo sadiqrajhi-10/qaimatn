@@ -413,19 +413,20 @@ def get_ai_suggestion(available_ingredients: str, meal_type: str):
     api_key = app.config.get("GEMINI_API_KEY")
     if not api_key:
         return None
-    try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
-        prompt = (
-            f"اقترح فكرة {meal_type} بسيطة وسريعة باستخدام هذي المكونات المتوفرة: "
-            f"{available_ingredients}. جاوب بجملة أو جملتين بس بالعربي."
-        )
-        response = model.generate_content(prompt)
-        return response.text.strip()
-    except Exception:
+        try:
+        url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent"
+        headers = {"x-goog-api-key": api_key, "Content-Type": "application/json"}
+        prompt = f"اقترح فكرة {meal_type} بسيطة وسريعة باستخدام هذي المكونات المتوفرة: {available_ingredients}. جاوب بجملة أو جملتين بس بالعربي."
+        payload = {"contents": [{"parts": [{"text": prompt}]}]}
+        resp = requests.post(url, headers=headers, json=payload, timeout=20)
+        if resp.status_code != 200:
+            print("Gemini API error:", resp.status_code, resp.text[:300])
+            return None
+        data = resp.json()
+        return data["candidates"][0]["content"]["parts"][0]["text"].strip()
+except Exception as e:
+        print("Gemini suggestion failed:", e)
         return None
-
 
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
