@@ -8,7 +8,7 @@
 <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/dist/tabler-icons.min.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
 <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
@@ -85,42 +85,29 @@ function urlBase64ToUint8Array(base64String) {
   return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
 }
 
-async function enablePush() {
+async function enablePush(silent) {
   const btn = document.getElementById('push-btn');
-  if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-    alert('المتصفح ما يدعم الإشعارات');
-    return;
-  }
-  if (!VAPID_PUBLIC_KEY) {
-    alert('ميزة الإشعارات ما اتفعلت بعد بالسيرفر');
-    return;
-  }
+  if (!('serviceWorker' in navigator) || !('PushManager' in window)) { if (!silent) alert('المتصفح ما يدعم الإشعارات'); return; }
+  if (!VAPID_PUBLIC_KEY) { if (!silent) alert('ميزة الإشعارات ما اتفعلت بعد بالسيرفر'); return; }
   try {
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') return;
+    let permission = Notification.permission;
+    if (permission !== 'granted') { if (silent) return; permission = await Notification.requestPermission(); if (permission !== 'granted') return; }
     const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
     await navigator.serviceWorker.ready;
     let sub = await reg.pushManager.getSubscription();
-    if (!sub) {
-      sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-      });
-    }
-    await fetch('/push/subscribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(sub)
-    });
-    if (btn) {
-      btn.innerHTML = '<i class="ti ti-bell-ringing"></i>';
-      btn.classList.add('push-enabled');
-    }
+    if (!sub) { sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) }); }
+    await fetch('/push/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
+    if (btn) { btn.innerHTML = '<i class="ti ti-bell-ringing"></i>'; btn.classList.add('push-enabled'); }
   } catch (err) {
-    alert('ما قدرنا نفعّل الإشعارات، حاول مرة ثانية');
+    if (!silent) alert('ما قدرنا نفعّل الإشعارات، حاول مرة ثانية');
   }
 }
-</script>
+
+    if (typeof Notification !== 'undefined' && Notification.permission === 'granted') {
+  const btn0 = document.getElementById('push-btn');
+  if (btn0) { btn0.innerHTML = '<i class="ti ti-bell-ringing"></i>'; btn0.classList.add('push-enabled'); }
+  enablePush(true);
+    }</script>
 
 {% if current_user %}
 <script>
