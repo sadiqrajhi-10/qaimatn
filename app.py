@@ -424,7 +424,7 @@ def get_ai_suggestion(available_ingredients: str, meal_type: str):
             return None
         data = resp.json()
         return data["candidates"][0]["content"]["parts"][0]["text"].strip()
-except Exception as e:
+    except Exception as e:
         print("Gemini suggestion failed:", e)
         return None
 
