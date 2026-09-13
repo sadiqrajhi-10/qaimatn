@@ -413,7 +413,7 @@ def get_ai_suggestion(available_ingredients: str, meal_type: str):
     api_key = app.config.get("GEMINI_API_KEY")
     if not api_key:
         return None
-        try:
+    try:
         url = "https://generativelanguage.googleapis.com/v1beta/models/gemini-3.5-flash-lite:generateContent"
         headers = {"x-goog-api-key": api_key, "Content-Type": "application/json"}
         prompt = f"اقترح فكرة {meal_type} بسيطة وسريعة باستخدام هذي المكونات المتوفرة: {available_ingredients}. جاوب بجملة أو جملتين بس بالعربي."
