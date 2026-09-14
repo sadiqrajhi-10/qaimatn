@@ -109,7 +109,7 @@ def notify_other_user(current_user, title, body):
     db.session.commit()
 
 
-    def notify_all_users(title, body):
+def notify_all_users(title, body):
     """يبعت إشعار للطرفين الاثنين مع بعض - يستخدم بتذكيرات الأمنيات."""
     if not webpush or not app.config.get("VAPID_PRIVATE_KEY"):
         return
