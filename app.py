@@ -1,7 +1,7 @@
 import json as json_lib
 import uuid
 import requests
-from datetime import timedelta
+from datetime import datetime, timedelta, timezone
 from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
@@ -33,6 +33,25 @@ def local_date(dt):
     if not dt:
         return ""
     return (dt + timedelta(hours=2)).strftime("%d/%m/%Y")
+
+
+@app.template_filter("local_datetime")
+def local_datetime(dt):
+    """يحول الوقت المخزن (UTC) لتوقيت طرابلس (+2) ويعرضه بتاريخ ووقت."""
+    if not dt:
+        return ""
+    return (dt + timedelta(hours=2)).strftime("%d/%m/%Y %H:%M")
+
+
+def parse_local_datetime(value):
+    """ياخذ نص من input type=datetime-local (بتوقيت طرابلس) ويرجعه UTC. None لو فاضي أو غلط."""
+    if not value:
+        return None
+    try:
+        local_dt = datetime.strptime(value, "%Y-%m-%dT%H:%M")
+        return (local_dt - timedelta(hours=2)).replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
 
 
 def added_verb(user):
@@ -73,6 +92,28 @@ def notify_other_user(current_user, title, body):
         return
     other_users = [u for u in app.config["ALLOWED_USERS"] if u != current_user]
     subs = PushSubscription.query.filter(PushSubscription.user.in_(other_users)).all()
+    for sub in subs:
+        try:
+            webpush(
+                subscription_info={
+                    "endpoint": sub.endpoint,
+                    "keys": {"p256dh": sub.p256dh, "auth": sub.auth},
+                },
+                data=json_lib.dumps({"title": title, "body": body}),
+                vapid_private_key=app.config["VAPID_PRIVATE_KEY"],
+                vapid_claims={"sub": app.config["VAPID_CLAIMS_EMAIL"]},
+            )
+        except WebPushException as e:
+            if "410" in str(e) or "404" in str(e):
+                db.session.delete(sub)
+    db.session.commit()
+
+
+    def notify_all_users(title, body):
+    """يبعت إشعار للطرفين الاثنين مع بعض - يستخدم بتذكيرات الأمنيات."""
+    if not webpush or not app.config.get("VAPID_PRIVATE_KEY"):
+        return
+    subs = PushSubscription.query.all()
     for sub in subs:
         try:
             webpush(
@@ -194,9 +235,11 @@ def shopping_add():
     name = request.form.get("name", "").strip()
     category = request.form.get("category", "").strip() or "عام"
     note = request.form.get("note", "").strip() or None
+    price_raw = request.form.get("price_estimate", "").strip()
+    price = float(price_raw) if price_raw else None
     photo_url = upload_photo(request.files.get("photo"))
     if name:
-        db.session.add(ShoppingItem(name=name, category=category, note=note, photo_url=photo_url, added_by=session["user"]))
+        db.session.add(ShoppingItem(name=name, category=category, note=note, price_estimate=price, photo_url=photo_url, added_by=session["user"]))
         db.session.commit()
         flash(f'تمت إضافة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} "{name}" للنواقص')
@@ -284,8 +327,10 @@ def wishlist_add():
     priority = request.form.get("priority", "متوسطة")
     price_raw = request.form.get("price_estimate", "").strip()
     price = float(price_raw) if price_raw else None
+    remind_at = parse_local_datetime(request.form.get("remind_at", "").strip())
+    photo_url = upload_photo(request.files.get("photo"))
     if name:
-        db.session.add(WishlistItem(name=name, priority=priority, price_estimate=price, added_by=session["user"]))
+        db.session.add(WishlistItem(name=name, priority=priority, price_estimate=price, remind_at=remind_at, photo_url=photo_url, added_by=session["user"]))
         db.session.commit()
         flash(f'تمت إضافة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} "{name}" للأمنيات')
@@ -315,6 +360,25 @@ def wishlist_delete(item_id):
     db.session.delete(item)
     db.session.commit()
     return redirect(url_for("wishlist"))
+
+
+@app.route("/cron/reminders")
+def cron_reminders():
+    """رابط يستدعيه مجدول خارجي (زي cron-job.org) كل شوي عشان يبعث تذكيرات الأمنيات اللي وصل موعدها."""
+    secret = app.config.get("CRON_SECRET", "")
+    if not secret or request.args.get("token", "") != secret:
+        return jsonify({"ok": False, "error": "unauthorized"}), 401
+    due = WishlistItem.query.filter(
+        WishlistItem.remind_at.isnot(None),
+        WishlistItem.remind_at <= now_utc(),
+        WishlistItem.reminded.is_(False),
+        WishlistItem.done.is_(False),
+    ).all()
+    for item in due:
+        notify_all_users("تذكير من قائمتنا 🔔", f'موعد "{item.name}" وصل')
+        item.reminded = True
+    db.session.commit()
+    return jsonify({"ok": True, "sent": len(due)})
 
 
 # ---------- الأكل ----------
