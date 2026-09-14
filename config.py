@@ -19,6 +19,9 @@ class Config:
 
     GEMINI_API_KEY = os.environ.get("GEMINI_API_KEY", "")
 
+    # سر بسيط لحماية رابط التذكيرات اللي يستدعيه المجدول الخارجي (cron-job.org)
+    CRON_SECRET = os.environ.get("CRON_SECRET", "")
+
     # مفاتيح إشعارات الويب (Web Push) - راجع رسالة الشات لقيمهم
     VAPID_PUBLIC_KEY = os.environ.get("VAPID_PUBLIC_KEY", "")
     VAPID_PRIVATE_KEY = os.environ.get("VAPID_PRIVATE_KEY", "")
