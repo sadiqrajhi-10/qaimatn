@@ -6,17 +6,21 @@
 {% for item in items %}
 <div class="list-row">
   <form method="POST" action="{{ url_for('wishlist_toggle', item_id=item.id) }}" style="flex:1;">
-    <button type="submit" class="row-click-btn {{ 'row-fading' if item.done else '' }}">
-      <span class="row-info">
-        <span class="item-name">{{ item.name }}</span>
-        <span class="item-note">
-          أضافه {{ item.added_by }} - {{ item.created_at | local_date }}
-          {% if item.done and item.bought_by %} · اشتراه {{ item.bought_by }}{% endif %}
-        </span>
-        <span class="badge priority-{{ item.priority }}">أولوية {{ item.priority }}</span>
-      </span>
-      {% if item.price_estimate %}<span class="app-subtitle" dir="ltr">{{ item.price_estimate | int }} د.ل</span>{% endif %}
-    </button>
+          <button type="submit" class="row-click-btn {{ 'row-fading' if item.done else '' }}">
+          <span style="display:flex; align-items:center; gap:10px;">
+            {% if item.photo_url %}<img src="{{ item.photo_url }}" class="item-photo" alt="" onclick="openLightbox(event, '{{ item.photo_url }}')">{% endif %}
+            <span class="row-info">
+                <span class="item-name">{{ item.name }}</span>
+                <span class="item-note">
+                      أضافه {{ item.added_by }} - {{ item.created_at | local_date }}
+                      {% if item.done and item.bought_by %} · اشتراه {{ item.bought_by }}{% endif %}
+                </span>
+                  {% if item.remind_at %}<span class="badge badge-amber"><i class="ti ti-bell"></i> {{ item.remind_at | local_datetime }}</span>{% endif %}
+                <span class="badge priority-{{ item.priority }}">أولوية {{ item.priority }}</span>
+            </span>
+          </span>
+        {% if item.price_estimate %}<span class="app-subtitle" dir="ltr">{{ item.price_estimate | int }} د.ل</span>{% endif %}
+          </button>
   </form>
   <form method="POST" action="{{ url_for('wishlist_delete', item_id=item.id) }}">
     <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
@@ -26,7 +30,7 @@
 <p class="app-subtitle">القائمة فاضية توا</p>
 {% endfor %}
 
-<form method="POST" action="{{ url_for('wishlist_add') }}" class="add-form">
+<form method="POST" action="{{ url_for('wishlist_add') }}" class="add-form" enctype="multipart/form-data">
   <div class="field">
     <label>إضافة شي نبوه</label>
     <input type="text" name="name" placeholder="اسم الغرض" required>
@@ -40,6 +44,14 @@
   </div>
   <div class="field">
     <input type="number" name="price_estimate" placeholder="السعر التقديري (اختياري)" dir="ltr">
+  </div>
+  <div class="field">
+    <label>تذكرني بموعد (اختياري)</label>
+    <input type="datetime-local" name="remind_at" dir="ltr">
+  </div>
+  <div class="field">
+    <label>صورة (اختياري)</label>
+    <input type="file" name="photo" accept="image/*">
   </div>
   <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> إضافة</button>
 </form>
