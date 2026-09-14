@@ -22,7 +22,10 @@
           {% if item.note %}<span class="item-note">{{ item.note }}</span>{% endif %}
         </span>
       </span>
-      <span class="badge badge-teal">{{ item.category }}</span>
+      <span style="display:flex; align-items:center; gap:8px;">
+        {% if item.price_estimate %}<span class="app-subtitle" dir="ltr">{{ item.price_estimate | int }} د.ل</span>{% endif %}
+        <span class="badge badge-teal">{{ item.category }}</span>
+      </span>
     </button>
   </form>
   <form method="POST" action="{{ url_for('shopping_delete', item_id=item.id) }}">
@@ -50,6 +53,10 @@
   <div class="field">
     <label>ملاحظة على هالغرض (اختياري)</label>
     <input type="text" name="note" placeholder="مثلا: خذ النوع قليل الدسم">
+  </div>
+  <div class="field">
+    <label>السعر (اختياري)</label>
+    <input type="number" name="price_estimate" placeholder="السعر التقديري" dir="ltr">
   </div>
   <div class="field">
     <label>صورة (اختياري)</label>
