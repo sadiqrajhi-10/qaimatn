@@ -17,24 +17,41 @@
   --border: #eee;
   --radius: 12px;
   --font-main: 'Tajawal', 'Segoe UI', Tahoma, sans-serif;
+    --bg-page: #f7f6f2;
+    --bg-card: #fff;
+    --bg-soft: #f2f1ec;
+    --bg-input: #faf9f6;
 }
+
+  [data-theme="dark"] {
+      --text-primary: #ececea;
+      --text-secondary: #a3a19a;
+      --text-muted: #6e6c64;
+      --border: #333330;
+      --bg-page: #121212;
+      --bg-card: #1c1c1a;
+      --bg-soft: #292925;
+      --bg-input: #242420;
+  }
 
 * { box-sizing: border-box; }
 
 body {
   margin: 0;
   font-family: var(--font-main);
-  background: #f7f6f2;
+    background: var(--bg-page);
   color: var(--text-primary);
+    transition: background-color 0.2s ease, color 0.2s ease;
 }
 
 .app-shell {
   max-width: 420px;
   margin: 0 auto;
   min-height: 100vh;
-  background: #fff;
+    background: var(--bg-card);
   display: flex;
   flex-direction: column;
+    transition: background-color 0.2s ease;
 }
 
 .app-header {
@@ -50,9 +67,9 @@ body {
 .avatar-btn {
   width: 38px; height: 38px; border-radius: 50%;
   border: none; font-weight: 700; font-size: 14px; cursor: pointer;
-  font-family: inherit; background: #f2f1ec; color: var(--text-secondary);
+    font-family: inherit; background: var(--bg-soft); color: var(--text-secondary);
   display: flex; align-items: center; justify-content: center;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: transform 0.12s ease;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: transform 0.12s ease, background-color 0.2s ease;
 }
 .avatar-btn .ti { font-size: 18px; }
 .avatar-btn:active { transform: scale(0.92); }
@@ -63,7 +80,7 @@ body {
 .app-content { flex: 1; padding: 4px 20px 30px; }
 
 .top-nav {
-  display: flex; gap: 4px; background: #f2f1ec;
+    display: flex; gap: 4px; background: var(--bg-soft); transition: background-color 0.2s ease;
   border-radius: 14px; padding: 4px; margin: 12px 20px 4px;
 }
 .top-nav a {
@@ -73,7 +90,7 @@ body {
   border-radius: 10px; transition: background 0.15s ease, color 0.15s ease;
 }
 .top-nav a .ti { font-size: 19px; }
-.top-nav a.active { background: #fff; color: var(--teal); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
+.top-nav a.active { background: var(--bg-card); color: var(--teal); font-weight: 700; box-shadow: 0 1px 3px rgba(0,0,0,0.06); }
 
 .toast {
   position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%);
@@ -89,16 +106,17 @@ body {
 
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
-input[type=text], input[type=number], input[type=password], select, textarea {
+input[type=text], input[type=number], input[type=password], input[type=datetime-local], input[type=file], select, textarea {
   width: 100%; padding: 10px 12px; border: 1px solid var(--border);
-  border-radius: var(--radius); font-family: inherit; font-size: 14px; background: #faf9f6;
+    border-radius: var(--radius); font-family: inherit; font-size: 14px; background: var(--bg-input); color: var(--text-primary); transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
+input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }
 
 button, .btn { border: none; border-radius: var(--radius); padding: 11px 16px; font-family: inherit; font-size: 14px; font-weight: 700; cursor: pointer; }
 .btn-primary { background: var(--teal); color: #fff; width: 100%; }
-.btn-ghost { background: #f2f1ec; color: var(--text-primary); }
+.btn-ghost { background: var(--bg-soft); color: var(--text-primary); }
 
-.add-form { background: #faf9f6; border-radius: 16px; padding: 16px; margin-top: 16px; }
+.add-form { background: var(--bg-input); border-radius: 16px; padding: 16px; margin-top: 16px; transition: background-color 0.2s ease; }
 
 .list-row { display: flex; align-items: center; justify-content: space-between; padding: 0; border-bottom: 1px solid var(--border); }
 .list-row:last-child { border-bottom: none; }
@@ -131,7 +149,7 @@ button, .btn { border: none; border-radius: var(--radius); padding: 11px 16px; f
 
 .priority-عالية { background: var(--danger-light); color: var(--danger-dark); }
 .priority-متوسطة { background: var(--warning-light); color: var(--warning-dark); }
-.priority-منخفضة { background: #f2f1ec; color: var(--text-secondary); }
+.priority-منخفضة { background: var(--bg-soft); color: var(--text-secondary); }
 
 .delete-btn { background: none; border: none; color: var(--text-muted); font-size: 16px; cursor: pointer; }
 
