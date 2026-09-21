@@ -2,7 +2,16 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <script>
+    (function () {
+        try {
+              var t = localStorage.getItem('theme');
+              if (!t) t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+              document.documentElement.setAttribute('data-theme', t);
+        } catch (e) {}
+    })();
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#1D9E75">
 <title>{% block title %}قائمتنا{% endblock %}</title>
 <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
@@ -18,8 +27,11 @@
       <p class="app-title">قائمتنا</p>
       {% if current_user %}<p class="app-subtitle">أهلاً {{ current_user }}</p>{% endif %}
     </div>
-    {% if current_user %}
-    <div style="display:flex; align-items:center; gap:8px;">
+        <div style="display:flex; align-items:center; gap:8px;">
+                  <button id="theme-btn" class="avatar-btn" onclick="toggleTheme()" title="الوضع الداكن" aria-label="الوضع الداكن">
+                              <i class="ti ti-moon"></i>
+                  </button>
+                  {% if current_user %}
       <button id="push-btn" class="avatar-btn" onclick="enablePush()" title="فعّل الإشعارات" aria-label="فعّل الإشعارات">
         <i class="ti ti-bell"></i>
       </button>
@@ -64,6 +76,19 @@
     function closeLightbox() {
       document.getElementById('lightbox-overlay').classList.remove('open');
     }
+
+    function applyThemeIcon(theme) {
+        var btn = document.getElementById('theme-btn');
+        if (btn) btn.innerHTML = theme === 'dark' ? '<i class="ti ti-sun"></i>' : '<i class="ti ti-moon"></i>';
+    }
+function toggleTheme() {
+  var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+  var next = current === 'dark' ? 'light' : 'dark';
+  try { localStorage.setItem('theme', next); } catch (e) {}
+  document.documentElement.setAttribute('data-theme', next);
+  applyThemeIcon(next);
+}
+applyThemeIcon(document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light');
         </script>
 {% with messages = get_flashed_messages(with_categories=true) %}
   {% for category, message in messages %}
