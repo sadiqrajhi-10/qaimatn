@@ -432,7 +432,7 @@ def cron_reminders():
         notify_all_users("تذكير من قائمتنا 🔔", f'موعد مهمة "{task.name}" وصل')
         task.reminded = True
     db.session.commit()
-        return jsonify({"ok": True, "sent": len(due) + len(due_tasks)})
+    return jsonify({"ok": True, "sent": len(due) + len(due_tasks)})
 
 
 # ---------- الأكل ----------
