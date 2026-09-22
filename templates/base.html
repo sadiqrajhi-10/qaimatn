@@ -45,6 +45,9 @@
 
   {% if current_user %}
   <nav class="top-nav">
+  <a href="{{ url_for('tasks') }}" class="{{ 'active' if request.endpoint == 'tasks' else '' }}">
+    <i class="ti ti-checklist"></i><span>المهام</span>
+  </a>
     <a href="{{ url_for('shopping') }}" class="{{ 'active' if request.endpoint == 'shopping' else '' }}">
       <i class="ti ti-shopping-cart"></i><span>النواقص</span>
     </a>
