@@ -106,8 +106,13 @@ body {
 
 .field { margin-bottom: 12px; }
 .field label { display: block; font-size: 13px; color: var(--text-secondary); margin-bottom: 4px; }
-input[type=text], input[type=number], input[type=password], input[type=datetime-local], input[type=file], select, textarea {
-  width: 100%; padding: 10px 12px; border: 1px solid var(--border);
+input[type=text], input[type=number], input[type=password], input[type=datetime-local], input[type=file] {
+    width: 100%; height: 44px; padding: 0 12px; border: 1px solid var(--border);
+    border-radius: var(--radius); font-family: inherit; font-size: 14px; background: var(--bg-input); color: var(--text-primary); transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+input[type=datetime-local] { -webkit-appearance: none; appearance: none; }
+select, textarea {
+    width: 100%; padding: 10px 12px; border: 1px solid var(--border);
     border-radius: var(--radius); font-family: inherit; font-size: 14px; background: var(--bg-input); color: var(--text-primary); transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 input::placeholder, textarea::placeholder { color: var(--text-muted); opacity: 1; }
