@@ -7,7 +7,7 @@ from functools import wraps
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 from config import Config
-from models import db, ShoppingItem, WishlistItem, MealProposal, SharedNote, PushSubscription, now_utc
+from models import db, ShoppingItem, WishlistItem, MealProposal, SharedNote, PushSubscription, Task, now_utc
 
 try:
     from pywebpush import webpush, WebPushException
@@ -266,7 +266,52 @@ def shopping_delete(item_id):
     db.session.commit()
     return redirect(url_for("shopping"))
 
+# ---------- المهام ----------
 
+@app.route("/tasks", methods=["GET"])
+@user_required
+def tasks():
+    cutoff = now_utc() - timedelta(minutes=FADE_MINUTES)
+    Task.query.filter(
+        Task.done.is_(True), Task.done_at < cutoff
+    ).delete(synchronize_session=False)
+    db.session.commit()
+
+    items = Task.query.order_by(Task.done, Task.due_at.is_(None), Task.due_at, Task.created_at.desc()).all()
+    return render_template("tasks.html", items=items)
+
+@app.route("/tasks/add", methods=["POST"])
+@user_required
+def tasks_add():
+    name = request.form.get("name", "").strip()
+    due_at = parse_local_datetime(request.form.get("due_at", "").strip())
+    if name:
+        db.session.add(Task(name=name, due_at=due_at, added_by=session["user"]))
+        db.session.commit()
+        flash(f'تمت إضافة "{name}"', "success")
+        notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} مهمة "{name}"')
+    return redirect(url_for("tasks"))
+
+@app.route("/tasks/toggle/<int:item_id>", methods=["POST"])
+@user_required
+def tasks_toggle(item_id):
+    item = Task.query.get_or_404(item_id)
+    item.done = not item.done
+    item.done_at = now_utc() if item.done else None
+    db.session.commit()
+    if item.done:
+        flash(f'تم إنجاز "{item.name}" - بيتحذف تلقائي بعد {FADE_MINUTES} دقايق', "success")
+    return redirect(url_for("tasks"))
+    
+
+@app.route("/tasks/delete/<int:item_id>", methods=["POST"])
+@user_required
+def tasks_delete(item_id):
+    item = Task.query.get_or_404(item_id)
+    db.session.delete(item)
+    db.session.commit()
+    return redirect(url_for("tasks"))
+    
 @app.route("/note/update", methods=["POST"])
 @user_required
 def note_update():
@@ -377,8 +422,17 @@ def cron_reminders():
     for item in due:
         notify_all_users("تذكير من قائمتنا 🔔", f'موعد "{item.name}" وصل')
         item.reminded = True
+    due_tasks = Task.query.filter(
+        Task.due_at.isnot(None),
+        Task.due_at <= now_utc(),
+        Task.reminded.is_(False),
+        Task.done.is_(False),
+    ).all()
+    for task in due_tasks:
+        notify_all_users("تذكير من قائمتنا 🔔", f'موعد مهمة "{task.name}" وصل')
+        task.reminded = True
     db.session.commit()
-    return jsonify({"ok": True, "sent": len(due)})
+        return jsonify({"ok": True, "sent": len(due) + len(due_tasks)})
 
 
 # ---------- الأكل ----------
