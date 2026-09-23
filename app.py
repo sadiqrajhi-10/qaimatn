@@ -1,5 +1,6 @@
 import json as json_lib
 import uuid
+import random
 import requests
 from datetime import datetime, timedelta, timezone
 from functools import wraps
@@ -23,6 +24,27 @@ with app.app_context():
     db.create_all()
 
 # بعد ما يتحدد الغرض "تم شراؤه"، يفضل بان باهت لهالمدة، وبعدها يتحذف نهائيًا من القاعدة
+WISHLIST_REMINDER_TITLES = ["🔔 تذكير من قائمتنا", "⏰ حان الوقت", "📌 لا تنسَ"]
+WISHLIST_REMINDER_BODIES = [
+    'حان الآن موعد "{name}"',
+    'تذكير: موعد "{name}" قد حان',
+    'لا تنسَ: "{name}" ينتظرك الآن',
+    'الوقت قد حان لـ"{name}"',
+    'تنبيه: حان موعد "{name}"',
+]
+TASK_REMINDER_TITLES = ["🔔 تذكير من قائمتنا", "⏰ حان الوقت", "📋 مهمة تنتظرك"]
+TASK_REMINDER_BODIES = [
+    'حان الآن موعد مهمة "{name}"',
+    'تذكير: مهمتك "{name}" حان وقتها',
+    'لا تنسَ مهمة "{name}"',
+    'الوقت قد حان لتنفيذ "{name}"',
+    'تنبيه: مهمة "{name}" تنتظر الآن',
+]
+
+def random_reminder(titles, bodies, name):
+    title = random.choice(titles)
+    body = random.choice(bodies).format(name=name)
+    return title, body
 FADE_MINUTES = 5
 WISHLIST_FADE_DAYS = 5
 
@@ -420,7 +442,8 @@ def cron_reminders():
         WishlistItem.done.is_(False),
     ).all()
     for item in due:
-        notify_all_users("تذكير من قائمتنا 🔔", f'موعد "{item.name}" وصل')
+        title, body = random_reminder(WISHLIST_REMINDER_TITLES, WISHLIST_REMINDER_BODIES, item.name)
+        notify_all_users(title, body)
         item.reminded = True
     due_tasks = Task.query.filter(
         Task.due_at.isnot(None),
@@ -429,7 +452,8 @@ def cron_reminders():
         Task.done.is_(False),
     ).all()
     for task in due_tasks:
-        notify_all_users("تذكير من قائمتنا 🔔", f'موعد مهمة "{task.name}" وصل')
+        title, body = random_reminder(TASK_REMINDER_TITLES, TASK_REMINDER_BODIES, task.name)
+        notify_all_users(title, body)
         task.reminded = True
     db.session.commit()
     return jsonify({"ok": True, "sent": len(due) + len(due_tasks)})
