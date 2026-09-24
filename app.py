@@ -64,6 +64,12 @@ def local_datetime(dt):
         return ""
     return (dt + timedelta(hours=2)).strftime("%d/%m/%Y %H:%M")
 
+@app.template_filter("local_input_datetime")
+def local_input_datetime(dt):
+    if not dt:
+        return ""
+    return (dt + timedelta(hours=2)).strftime("%Y-%m-%dT%H:%M")
+
 
 def parse_local_datetime(value):
     """ياخذ نص من input type=datetime-local (بتوقيت طرابلس) ويرجعه UTC. None لو فاضي أو غلط."""
@@ -248,7 +254,9 @@ def shopping():
     )
     categories = [row[0] for row in category_rows]
     shared_note = SharedNote.query.first()
-    return render_template("shopping.html", items=items, categories=categories, shared_note=shared_note)
+    edit_id = request.args.get("edit", type=int)
+    edit_item = ShoppingItem.query.get(edit_id) if edit_id else None
+    return render_template("shopping.html", items=items, categories=categories, shared_note=shared_note, edit_item=edit_item)
 
 
 @app.route("/shopping/add", methods=["POST"])
@@ -265,6 +273,28 @@ def shopping_add():
         db.session.commit()
         flash(f'تمت إضافة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} "{name}" للنواقص')
+    return redirect(url_for("shopping"))
+
+
+@app.route("/shopping/edit/<int:item_id>", methods=["POST"])
+@user_required
+def shopping_edit(item_id):
+    item = ShoppingItem.query.get_or_404(item_id)
+    name = request.form.get("name", "").strip()
+    category = request.form.get("category", "").strip() or "عام"
+    note = request.form.get("note", "").strip() or None
+    price_raw = request.form.get("price_estimate", "").strip()
+    price = float(price_raw) if price_raw else None
+    new_photo = upload_photo(request.files.get("photo"))
+    if name:
+        item.name = name
+        item.category = category
+        item.note = note
+        item.price_estimate = price
+        if new_photo:
+            item.photo_url = new_photo
+        db.session.commit()
+        flash(f'تم تعديل "{name}"', "success")
     return redirect(url_for("shopping"))
 
 
@@ -300,7 +330,9 @@ def tasks():
     db.session.commit()
 
     items = Task.query.order_by(Task.done, Task.due_at.is_(None), Task.due_at, Task.created_at.desc()).all()
-    return render_template("tasks.html", items=items)
+    edit_id = request.args.get("edit", type=int)
+    edit_item = Task.query.get(edit_id) if edit_id else None
+    return render_template("tasks.html", items=items, edit_item=edit_item)
 
 @app.route("/tasks/add", methods=["POST"])
 @user_required
@@ -312,6 +344,21 @@ def tasks_add():
         db.session.commit()
         flash(f'تمت إضافة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} مهمة "{name}"')
+    return redirect(url_for("tasks"))
+
+
+@app.route("/tasks/edit/<int:item_id>", methods=["POST"])
+@user_required
+def tasks_edit(item_id):
+    item = Task.query.get_or_404(item_id)
+    name = request.form.get("name", "").strip()
+    due_at = parse_local_datetime(request.form.get("due_at", "").strip())
+    if name:
+        item.name = name
+        item.due_at = due_at
+        item.reminded = False
+        db.session.commit()
+        flash(f'تم تعديل "{name}"', "success")
     return redirect(url_for("tasks"))
 
 @app.route("/tasks/toggle/<int:item_id>", methods=["POST"])
@@ -384,7 +431,9 @@ def wishlist():
     order = {"عالية": 0, "متوسطة": 1, "منخفضة": 2}
     items = WishlistItem.query.order_by(WishlistItem.done).all()
     items.sort(key=lambda i: order.get(i.priority, 1))
-    return render_template("wishlist.html", items=items)
+    edit_id = request.args.get("edit", type=int)
+    edit_item = WishlistItem.query.get(edit_id) if edit_id else None
+    return render_template("wishlist.html", items=items, edit_item=edit_item)
 
 
 @app.route("/wishlist/add", methods=["POST"])
@@ -401,6 +450,29 @@ def wishlist_add():
         db.session.commit()
         flash(f'تمت إضافة "{name}"', "success")
         notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} "{name}" للأمنيات')
+    return redirect(url_for("wishlist"))
+
+
+@app.route("/wishlist/edit/<int:item_id>", methods=["POST"])
+@user_required
+def wishlist_edit(item_id):
+    item = WishlistItem.query.get_or_404(item_id)
+    name = request.form.get("name", "").strip()
+    priority = request.form.get("priority", "متوسطة")
+    price_raw = request.form.get("price_estimate", "").strip()
+    price = float(price_raw) if price_raw else None
+    remind_at = parse_local_datetime(request.form.get("remind_at", "").strip())
+    new_photo = upload_photo(request.files.get("photo"))
+    if name:
+        item.name = name
+        item.priority = priority
+        item.price_estimate = price
+        item.remind_at = remind_at
+        item.reminded = False
+        if new_photo:
+            item.photo_url = new_photo
+        db.session.commit()
+        flash(f'تم تعديل "{name}"', "success")
     return redirect(url_for("wishlist"))
 
 
