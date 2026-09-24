@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% block title %}المهام{% endblock %}
 {% block content %}
-<p class="app-subtitle" style="margin-bottom:10px;">مهام لازم نسويها</p>
+<p class="app-subtitle" style="margin-bottom:10px;">مهام لازم نسويها</p>p>
 
 {% for item in items %}
 <div class="list-row">
@@ -10,28 +10,30 @@
       <span class="row-info">
         <span class="item-name">{{ item.name }}</span>
         <span class="item-note">أضافها {{ item.added_by }} - {{ item.created_at | local_date }}</span>
-  {% if item.due_at %}<span class="badge badge-amber"><i class="ti ti-bell"></i> {{ item.due_at | local_datetime }}</span>{% endif %}
+        {% if item.due_at %}<span class="badge badge-amber"><i class="ti ti-bell"></i> {{ item.due_at | local_datetime }}</span>{% endif %}
       </span>
     </button>
   </form>
-  <form method="POST" action="{{ url_for('tasks_delete', item_id=item.id) }}">
-    <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
-  </form>
+<a href="{{ url_for('tasks', edit=item.id) }}" class="delete-btn"><i class="ti ti-pencil"></i></a>
+<form method="POST" action="{{ url_for('tasks_delete', item_id=item.id) }}">
+  <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
+</form>
 </div>
 {% else %}
 <p class="app-subtitle">ما فيه مهام توا 🎉</p>
 {% endfor %}
 
-<form method="POST" action="{{ url_for('tasks_add') }}" class="add-form">
+<form method="POST" action="{{ url_for('tasks_edit', item_id=edit_item.id) if edit_item else url_for('tasks_add') }}" class="add-form">
   <div class="field">
-    <label>إضافة مهمة جديدة</label>
-        <input type="text" name="name" placeholder="حاجة لازم نديروها" required>
+    <label>{{ 'تعديل المهمة' if edit_item else 'إضافة مهمة جديدة' }}</label>
+    <input type="text" name="name" placeholder="حاجة لازم نديروها" value="{{ edit_item.name if edit_item else '' }}" required>
   </div>
-  <div class="field">
-    <label>الموعد (اختياري)</label>
-    <input type="datetime-local" name="due_at" dir="ltr">
-  </div>
-  <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> إضافة</button>
+<div class="field">
+  <label>الموعد (اختياري)</label>
+  <input type="datetime-local" name="due_at" dir="ltr" value="{{ edit_item.due_at | local_input_datetime if edit_item else '' }}">
+
+</div>
+<button type="submit" class="btn btn-primary"><i class="ti ti-{{ 'check' if edit_item else 'plus' }}"></i> {{ 'حفظ التعديل' if edit_item else 'إضافة' }}</button>
+{% if edit_item %}<a href="{{ url_for('tasks') }}" class="btn btn-ghost" style="display:block; text-align:center; margin-top:8px; text-decoration:none;">إلغاء</a>{% endif %}
 </form>
 {% endblock %}
-  </div>
