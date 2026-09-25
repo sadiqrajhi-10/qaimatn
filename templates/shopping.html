@@ -28,6 +28,7 @@
       </span>
     </button>
   </form>
+<a href="{{ url_for('shopping', edit=item.id) }}" class="delete-btn"><i class="ti ti-pencil"></i></a>
   <form method="POST" action="{{ url_for('shopping_delete', item_id=item.id) }}">
     <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
   </form>
@@ -36,14 +37,14 @@
 <p class="app-subtitle">ما فيه نواقص توا 🎉</p>
 {% endfor %}
 
-<form method="POST" action="{{ url_for('shopping_add') }}" class="add-form" enctype="multipart/form-data">
+    <form method="POST" action="{{ url_for('shopping_edit', item_id=edit_item.id) if edit_item else url_for('shopping_add') }}" class="add-form" enctype="multipart/form-data">
   <div class="field">
-    <label>إضافة نقص جديد</label>
-    <input type="text" name="name" placeholder="اسم الغرض" required>
+          <label>{{ 'تعديل الغرض' if edit_item else 'إضافة نقص جديد' }}</label>
+          <input type="text" name="name" placeholder="اسم الغرض" value="{{ edit_item.name if edit_item else '' }}" required>
   </div>
   <div class="field">
     <label>الفئة</label>
-    <input type="text" name="category" list="category-options" placeholder="اكتب فئة جديدة أو اختار وحدة قديمة">
+          <input type="text" name="category" list="category-options" placeholder="اكتب فئة جديدة أو اختار وحدة قديمة" value="{{ edit_item.category if edit_item else '' }}">
     <datalist id="category-options">
       {% for c in categories %}
       <option value="{{ c }}">
@@ -52,16 +53,17 @@
   </div>
   <div class="field">
     <label>ملاحظة على هالغرض (اختياري)</label>
-    <input type="text" name="note" placeholder="مثلا: خذ النوع قليل الدسم">
+          <input type="text" name="note" placeholder="مثلا: خذ النوع قليل الدسم" value="{{ edit_item.note if edit_item and edit_item.note else '' }}">
   </div>
   <div class="field">
     <label>السعر (اختياري)</label>
-    <input type="number" name="price_estimate" placeholder="السعر التقديري" dir="ltr">
+          <input type="number" name="price_estimate" placeholder="السعر التقديري" dir="ltr" value="{{ edit_item.price_estimate | int if edit_item and edit_item.price_estimate else '' }}">
   </div>
   <div class="field">
     <label>صورة (اختياري)</label>
       <input type="file" name="photo" accept="image/*">
   </div>
-  <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> إضافة</button>
+      <button type="submit" class="btn btn-primary"><i class="ti ti-{{ 'check' if edit_item else 'plus' }}"></i> {{ 'حفظ التعديل' if edit_item else 'إضافة' }}</button>
+{% if edit_item %}<a href="{{ url_for('shopping') }}" class="btn btn-ghost" style="display:block; text-align:center; margin-top:8px; text-decoration:none;">إلغاء</a>{% endif %}
 </form>
       {% endblock %}
