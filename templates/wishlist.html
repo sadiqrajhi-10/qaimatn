@@ -22,6 +22,7 @@
         {% if item.price_estimate %}<span class="app-subtitle" dir="ltr">{{ item.price_estimate | int }} د.ل</span>{% endif %}
           </button>
   </form>
+<a href="{{ url_for('wishlist', edit=item.id) }}" class="delete-btn"><i class="ti ti-pencil"></i></a>
   <form method="POST" action="{{ url_for('wishlist_delete', item_id=item.id) }}">
     <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
   </form>
@@ -30,29 +31,30 @@
 <p class="app-subtitle">القائمة فاضية توا</p>
 {% endfor %}
 
-<form method="POST" action="{{ url_for('wishlist_add') }}" class="add-form" enctype="multipart/form-data">
+<form method="POST" action="{{ url_for('wishlist_edit', item_id=edit_item.id) if edit_item else url_for('wishlist_add') }}" class="add-form" enctype="multipart/form-data">
   <div class="field">
-    <label>إضافة شي نبوه</label>
-    <input type="text" name="name" placeholder="اسم الغرض" required>
+          <label>{{ 'تعديل الأمنية' if edit_item else 'إضافة شي نبوه' }}</label>
+          <input type="text" name="name" placeholder="اسم الغرض" value="{{ edit_item.name if edit_item else '' }}" required>
   </div>
   <div class="field">
     <select name="priority">
-      <option value="عالية">أولوية عالية</option>
-      <option value="متوسطة" selected>أولوية متوسطة</option>
-      <option value="منخفضة">أولوية منخفضة</option>
+            <option value="عالية" {{ 'selected' if edit_item and edit_item.priority == 'عالية' }}>أولوية عالية</option>
+            <option value="متوسطة" {{ 'selected' if not edit_item or edit_item.priority == 'متوسطة' }}>أولوية متوسطة</option>
+            <option value="منخفضة" {{ 'selected' if edit_item and edit_item.priority == 'منخفضة' }}>أولوية منخفضة</option>
     </select>
   </div>
   <div class="field">
-    <input type="number" name="price_estimate" placeholder="السعر التقديري (اختياري)" dir="ltr">
+        <input type="number" name="price_estimate" placeholder="السعر التقديري (اختياري)" dir="ltr" value="{{ edit_item.price_estimate | int if edit_item and edit_item.price_estimate else '' }}">
   </div>
   <div class="field">
     <label>تذكرني بموعد (اختياري)</label>
-    <input type="datetime-local" name="remind_at" dir="ltr">
+        <input type="datetime-local" name="remind_at" dir="ltr" value="{{ edit_item.remind_at | local_input_datetime if edit_item else '' }}">
   </div>
   <div class="field">
     <label>صورة (اختياري)</label>
     <input type="file" name="photo" accept="image/*">
   </div>
-  <button type="submit" class="btn btn-primary"><i class="ti ti-plus"></i> إضافة</button>
+    <button type="submit" class="btn btn-primary"><i class="ti ti-{{ 'check' if edit_item else 'plus' }}"></i> {{ 'حفظ التعديل' if edit_item else 'إضافة' }}</button>
+{% if edit_item %}<a href="{{ url_for('wishlist') }}" class="btn btn-ghost" style="display:block; text-align:center; margin-top:8px; text-decoration:none;">إلغاء</a>{% endif %}
 </form>
 {% endblock %}
