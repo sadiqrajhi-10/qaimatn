@@ -1,13 +1,14 @@
 import os
 
-
 class Config:
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-change-me")
 
     _db_url = os.environ.get("DATABASE_URL", "sqlite:///app.db")
-    # Supabase/Render sometimes hand out "postgres://" but SQLAlchemy 2.x needs "postgresql://"
+    # Supabase/Render يعطون الرابط بصيغة postgres:// أو postgresql:// بدون تحديد المكتبة
     if _db_url.startswith("postgres://"):
-                _db_url = _db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+        _db_url = _db_url.replace("postgres://", "postgresql+psycopg2://", 1)
+    elif _db_url.startswith("postgresql://") and "+psycopg" not in _db_url:
+        _db_url = _db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
     SQLALCHEMY_DATABASE_URI = _db_url
     SQLALCHEMY_TRACK_MODIFICATIONS = False
 
