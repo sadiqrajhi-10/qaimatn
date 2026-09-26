@@ -73,6 +73,16 @@ class Task(db.Model):
     created_at = db.Column(db.DateTime(timezone=True), default=now_utc)
 
 
+class WalletTransaction(db.Model):
+    __tablename__ = "wallet_transactions"
+
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(10), nullable=False)
+    amount = db.Column(db.Float, nullable=False)
+    note = db.Column(db.String(200), nullable=True)
+    added_by = db.Column(db.String(30), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=now_utc)
+
 class MealProposal(db.Model):
     __tablename__ = "meal_proposal"
 
