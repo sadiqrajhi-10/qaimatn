@@ -2,7 +2,17 @@
 {% block title %}الأمنيات{% endblock %}
 {% block content %}
 <p class="app-subtitle" style="margin-bottom:10px;">أشياء نبوا نشريها</p>
-
+{% set ns = namespace(pending=0, bought=0, pending_count=0, no_price=0) %}
+{% for i in items %}{% if i.done %}{% set ns.bought = ns.bought + (i.price_estimate or 0) %}{% else %}{% set ns.pending = ns.pending + (i.price_estimate or 0) %}{% set ns.pending_count = ns.pending_count + 1 %}{% if not i.price_estimate %}{% set ns.no_price = ns.no_price + 1 %}{% endif %}{% endif %}{% endfor %}
+{% if items %}
+<div style="background:var(--bg-input); border:1px solid var(--border); border-radius:16px; padding:16px; margin-bottom:14px;">
+  <div style="display:flex; justify-content:space-between; align-items:flex-end; gap:12px;">
+    <div><p class="app-subtitle" style="margin:0 0 4px;">المتبقي للشراء ({{ ns.pending_count }})</p><p style="font-size:26px; font-weight:700; margin:0; color:var(--teal,#1D9E75);" dir="ltr">{{ '{:,.0f}'.format(ns.pending) }} د.ل</p></div>
+    <div style="text-align:left;"><p class="app-subtitle" style="margin:0 0 4px;">تم شراؤه</p><p style="font-size:18px; font-weight:700; margin:0;" dir="ltr">{{ '{:,.0f}'.format(ns.bought) }} د.ل</p></div>
+  </div>
+  <p class="app-subtitle" style="margin:10px 0 0;">الإجمالي الكلي: <b dir="ltr">{{ '{:,.0f}'.format(ns.pending + ns.bought) }} د.ل</b>{% if ns.no_price %} · {{ ns.no_price }} بدون سعر{% endif %}</p>
+</div>
+{% endif %}
 {% for item in items %}
 <div class="list-row">
   <form method="POST" action="{{ url_for('wishlist_toggle', item_id=item.id) }}" style="flex:1;">
