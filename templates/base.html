@@ -142,11 +142,14 @@ async function enablePush(silent) {
 // تحديث تلقائي كل 15 ثانية عشان تبان إضافات الطرف الثاني بدون ما تسووا Refresh يدوي
 setInterval(function () {
   if (document.visibilityState !== 'visible') return;
+  if (document.querySelector('form.add-form[action*="/edit/"]')) return;
   var active = document.activeElement;
   var tag = active ? active.tagName : '';
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
   location.reload();
 }, 15000);
+  (function () { var f = document.querySelector('form.add-form[action*="/edit/"]'); if (!f) return; var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:790;'; d.onclick = function () { location.href = location.pathname; }; document.body.appendChild(d); document.body.style.overflow = 'hidden'; })();
+  document.querySelectorAll('input[type="datetime-local"]').forEach(function (inp) { var b = document.createElement('button'); b.type = 'button'; b.className = 'btn btn-ghost'; b.textContent = 'مسح التاريخ'; b.style.cssText = 'margin-top:6px;width:100%;'; b.onclick = function () { inp.value = ''; }; inp.insertAdjacentElement('afterend', b); });
 </script>
 {% endif %}
 </body>
