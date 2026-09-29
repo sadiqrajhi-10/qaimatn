@@ -82,6 +82,21 @@ class WalletTransaction(db.Model):
     note = db.Column(db.String(200), nullable=True)
     added_by = db.Column(db.String(30), nullable=False)
     created_at = db.Column(db.DateTime(timezone=True), default=now_utc)
+class Event(db.Model):
+    __tablename__ = "events"
+
+    id = db.Column(db.Integer, primary_key=True)
+    type = db.Column(db.String(20), nullable=False, default="أخرى")
+    name = db.Column(db.String(200), nullable=False)
+    event_date = db.Column(db.Date, nullable=False)
+    remind_month = db.Column(db.Boolean, nullable=False, default=False)
+    remind_week = db.Column(db.Boolean, nullable=False, default=False)
+    remind_day = db.Column(db.Boolean, nullable=False, default=True)
+    reminded_month = db.Column(db.Boolean, nullable=False, default=False)
+    reminded_week = db.Column(db.Boolean, nullable=False, default=False)
+    reminded_day = db.Column(db.Boolean, nullable=False, default=False)
+    added_by = db.Column(db.String(30), nullable=False)
+    created_at = db.Column(db.DateTime(timezone=True), default=now_utc)
 
 class MealProposal(db.Model):
     __tablename__ = "meal_proposal"
