@@ -184,3 +184,22 @@ button, .btn { border: none; border-radius: var(--radius); padding: 11px 16px; f
 
 .list-row > a.delete-btn { order: -1; margin-inline-end: 8px; }
 form.add-form[action*="/edit/"] { position: fixed; inset: 0; margin: auto; width: min(92vw, 420px); height: fit-content; max-height: 86vh; overflow-y: auto; z-index: 800; background: var(--bg-card); border: 1px solid var(--border); box-shadow: 0 20px 60px rgba(0,0,0,0.4); }
+.type-picker { display:flex; flex-wrap:wrap; gap:8px; }
+.type-pill { display:flex; align-items:center; gap:4px; padding:8px 14px; border-radius:20px; background:var(--bg-soft); font-size:13px; cursor:pointer; user-select:none; border:1px solid transparent; }
+.type-pill input { display:none; }
+.type-pill:has(input:checked) { background:var(--teal); color:#fff; }
+.cal-header { display:flex; align-items:center; justify-content:space-between; margin:18px 0 10px; }
+.cal-title { font-weight:700; font-size:16px; }
+.cal-nav { background:var(--bg-input); border:none; border-radius:50%; width:34px; height:34px; display:flex; align-items:center; justify-content:center; color:var(--text-primary); text-decoration:none; }
+.cal-grid { display:grid; grid-template-columns:repeat(7,1fr); gap:4px; text-align:center; margin-bottom:8px; }
+.cal-weekday { font-size:11px; color:var(--text-secondary); padding:4px 0; }
+.cal-day { position:relative; aspect-ratio:1; display:flex; flex-direction:column; align-items:center; justify-content:center; border-radius:10px; background:var(--bg-input); color:var(--text-primary); text-decoration:none; font-size:13px; gap:2px; }
+.cal-day.empty { background:transparent; }
+.cal-day.today { border:2px solid var(--teal); font-weight:700; }
+.cal-day.selected { background:var(--teal); color:#fff; }
+.cal-dots { display:flex; gap:2px; }
+.cal-dot { width:5px; height:5px; border-radius:50%; display:inline-block; }
+.cal-dot-birthday { background:var(--teal); }
+.cal-dot-wedding { background:var(--coral); }
+.cal-dot-engagement { background:#E0A82E; }
+.cal-dot-other { background:var(--text-muted); }
