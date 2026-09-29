@@ -57,6 +57,9 @@
     <a href="{{ url_for('meals') }}" class="{{ 'active' if request.endpoint == 'meals' else '' }}">
       <i class="ti ti-tools-kitchen-2"></i><span>الأكل</span>
     </a>
+    <a href="{{ url_for('events') }}" class="{{ 'active' if request.endpoint == 'events' else '' }}">
+  <i class="ti ti-calendar-event"></i><span>المناسبات</</span>
+    </a>
   </nav>
   {% endif %}
 
