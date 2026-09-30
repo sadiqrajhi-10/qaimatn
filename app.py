@@ -642,5 +642,198 @@ def get_ai_suggestion(available_ingredients: str, meal_type: str):
         print("Gemini suggestion failed:", e)
         return None
 
+ARABIC_MONTHS = ["", "يناير", "فبراير", "مارس", "أبريل", "مايو", "يونيو", "يوليو", "أغسطس", "سبتمبر", "أكتوبر", "نوفمبر", "ديسمبر"]    
+ARABIC_WEEKDAYS = ["الأحد", "الإثنين", "الثلاثاء", "الأربعاء", "الخميس", "الجمعة", "السبت"]
+EVENT_TYPE_CLASS = {"عيد ميلاد": "birthday", "عرس": "wedding", "خطوبة": "engagement"}
+EVENT_REMINDER_TITLES = ["🔔 تذكير من قائمتنا", "📅 موعد قريب", "🎉 لا تنسَ"]
+EVENT_REMINDER_BODIES = {
+    "month": ['باقي شهر على "{name}"', 'بعد شهر تجي "{name}"', 'شهر ويوصل موعد "{name}"'],    
+    "week": ['باقي أسبوع على "{name}"', 'بعد أسبوع تجي "{name}"', 'أسبوع ويوصل موعد "{name}"'],    
+    "day": ['اليوم موعد "{name}" 🎉', '"{name}" اليوم', 'حان موعد "{name}" اليوم'],    
+}    
+
+def subtract_one_month(d):
+    month = d.month - 1    
+    year = d.year    
+    if month == 0:    
+        month = 12        
+        year -= 1        
+    last_day = calendar.monthrange(year, month)[1]        
+    day = min(d.day, last_day)    
+    return d.replace(year=year, month=month, day=day)    
+
+def event_reminder_datetime(d):
+    return datetime(d.year, d.month, d.day, 7, 0, tzinfo=timezone.utc)    
+
+def build_month_grid(year, month, events_by_day):
+    first_weekday, days_in_month = calendar.monthrange(year, month)    
+    offset = (first_weekday + 1) % 7    
+    cells = [None] * offset + list(range(1, days_in_month + 1))    
+    while len(cells) % 7 != 0:    
+        cells.append(None)        
+    weeks = []        
+    for i in range(0, len(cells), 7):    
+        week = []        
+        for day in cells[i:i + 7]:        
+            if day is None:            
+                week.append(None)                
+            else:                
+                week.append({"day": day, "events": events_by_day.get(day, [])})                
+        weeks.append(week)                
+    return weeks        
+
+def send_event_reminders():
+    sent_events = 0    
+    now = now_utc()    
+    for ev in Event.query.all():    
+        if ev.remind_month and not ev.reminded_month and now >= event_reminder_datetime(subtract_one_month(ev.event_date)):        
+            title = random.choice(EVENT_REMINDER_TITLES)            
+            body = random.choice(EVENT_REMINDER_BODIES["month"]).format(name=ev.name)            
+            notify_all_users(title, body)            
+            ev.reminded_month = True            
+            sent_events += 1            
+        if ev.remind_week and not ev.reminded_week and now >= event_reminder_datetime(ev.event_date - timedelta(days=7)):            
+            title = random.choice(EVENT_REMINDER_TITLES)            
+            body = random.choice(EVENT_REMINDER_BODIES["week"]).format(name=ev.name)            
+            notify_all_users(title, body)            
+            ev.reminded_week = True            
+            sent_events += 1            
+        if ev.remind_day and not ev.reminded_day and now >= event_reminder_datetime(ev.event_date):            
+            title = random.choice(EVENT_REMINDER_TITLES)            
+            body = random.choice(EVENT_REMINDER_BODIES["day"]).format(name=ev.name)            
+            notify_all_users(title, body)            
+            ev.reminded_day = True            
+            sent_events += 1            
+    return sent_events            
+
+@app.route("/events", methods=["GET"])
+@user_required
+def events():
+    today_local = (now_utc() + timedelta(hours=2)).date()    
+    year = request.args.get("y", type=int) or today_local.year    
+    month = request.args.get("m", type=int) or today_local.month    
+    while month > 12:    
+        month -= 12        
+        year += 1        
+    while month < 1:        
+        month += 12        
+        year -= 1        
+
+    all_events = Event.query.order_by(Event.event_date).all()
+
+    events_by_day = {}
+    for ev in all_events:    
+        if ev.event_date.year == year and ev.event_date.month == month:        
+            events_by_day.setdefault(ev.event_date.day, []).append(ev)            
+
+    weeks = build_month_grid(year, month, events_by_day)
+
+    prev_month = month - 1
+    prev_year = year    
+    if prev_month < 1:    
+        prev_month = 12        
+        prev_year -= 1        
+    next_month = month + 1        
+    next_year = year    
+    if next_month > 12:    
+        next_month = 1        
+        next_year += 1        
+
+    selected_day = request.args.get("day", type=int)
+    selected_events = events_by_day.get(selected_day, []) if selected_day else []    
+
+    upcoming_events = [ev for ev in all_events if ev.event_date >= today_local]    
+    upcoming_events.sort(key=lambda e: e.event_date)    
+    for ev in upcoming_events:    
+        ev.days_remaining = (ev.event_date - today_local).days        
+
+    edit_id = request.args.get("edit", type=int)
+    edit_item = Event.query.get(edit_id) if edit_id else None    
+
+    return render_template(
+        "events.html",        
+        weeks=weeks,        
+        month_name=ARABIC_MONTHS[month],        
+        year=year,        
+        month=month,        
+        prev_year=prev_year, prev_month=prev_month,        
+        next_year=next_year, next_month=next_month,        
+        weekdays=ARABIC_WEEKDAYS,        
+        today=today_local,        
+        selected_day=selected_day,        
+        selected_events=selected_events,        
+        upcoming_events=upcoming_events,        
+        edit_item=edit_item,        
+        event_type_class=EVENT_TYPE_CLASS,        
+    )        
+
+@app.route("/events/add", methods=["POST"])
+@user_required
+def events_add():
+    type_ = request.form.get("type", "أخرى").strip() or "أخرى"    
+    name = request.form.get("name", "").strip()    
+    date_raw = request.form.get("event_date", "").strip()    
+    remind_month = request.form.get("remind_month") == "1"
+    remind_week = request.form.get("remind_week") == "1"    
+    remind_day = request.form.get("remind_day") == "1"
+    try:    
+        event_date = datetime.strptime(date_raw, "%Y-%m-%d").date()    
+    except ValueError:
+        event_date = None        
+    if name and event_date:
+        today_local = (now_utc() + timedelta(hours=2)).date()        
+        if remind_month and subtract_one_month(event_date) <= today_local:
+            flash("المناسبة قريبة، تذكير الشهر راح يوصل حالًا", "success")            
+        ev = Event(
+            type=type_, name=name, event_date=event_date,        
+            remind_month=remind_month, remind_week=remind_week, remind_day=remind_day,        
+            added_by=session["user"],        
+        )        
+        db.session.add(ev)
+        db.session.commit()        
+        flash(f'تمت إضافة "{name}"', "success")
+        notify_other_user(session["user"], "قائمتنا", f'{session["user"]} {added_verb(session["user"])} مناسبة "{name}"')        
+        return redirect(url_for("events", y=event_date.year, m=event_date.month))
+    return redirect(url_for("events"))        
+
+@app.route("/events/edit/<int:item_id>", methods=["POST"])
+@user_required
+def events_edit(item_id):
+    ev = Event.query.get_or_404(item_id)    
+    type_ = request.form.get("type", "أخرى").strip() or "أخرى"
+    name = request.form.get("name", "").strip()    
+    date_raw = request.form.get("event_date", "").strip()
+    remind_month = request.form.get("remind_month") == "1"    
+    remind_week = request.form.get("remind_week") == "1"
+    remind_day = request.form.get("remind_day") == "1"    
+    try:
+        event_date = datetime.strptime(date_raw, "%Y-%m-%d").date()        
+    except ValueError:
+        event_date = None        
+    if name and event_date:
+        today_local = (now_utc() + timedelta(hours=2)).date()        
+        if remind_month and subtract_one_month(event_date) <= today_local:
+            flash("المناسبة قريبة، تذكير الشهر راح يوصل حالًا", "success")            
+        ev.type = type_
+        ev.name = name        
+        ev.event_date = event_date
+        ev.remind_month = remind_month        
+        ev.remind_week = remind_week
+        ev.remind_day = remind_day        
+        ev.reminded_month = False
+        ev.reminded_week = False        
+        ev.reminded_day = False
+        db.session.commit()        
+        flash(f'تم تعديل "{name}"', "success")
+        return redirect(url_for("events", y=event_date.year, m=event_date.month))        
+    return redirect(url_for("events"))
+
+@app.route("/events/delete/<int:item_id>", methods=["POST"])
+@user_required
+def events_delete(item_id):
+    ev = Event.query.get_or_404(item_id)    
+    db.session.delete(ev)
+    db.session.commit()    
+    return redirect(url_for("events"))
 if __name__ == "__main__":
     app.run(debug=True, host="0.0.0.0", port=5000)
