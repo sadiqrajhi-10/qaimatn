@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+{% block title %}المناسبات{% endblock %}
+{% block content %}
+
+<form method="POST" action="{{ url_for('events_edit', item_id=edit_item.id) if edit_item else url_for('events_add') }}" class="add-form">
+    <div class="field">
+      <label>{{ 'تعديل المناسبة' if edit_item else 'إضافة مناسبة جديدة' }}</label>
+    </div>
+    <div class="field">
+      <label>شن هي المناسبة؟</label>
+      <div class="type-picker">
+        <label class="type-pill"><input type="radio" name="type" value="عيد ميلاد" {{ 'checked' if not edit_item or edit_item.type == 'عيد ميلاد' }}>🎂 عيد ميلاد</label>
+        <label class="type-pill"><input type="radio" name="type" value="عرس" {{ 'checked' if edit_item and edit_item.type == 'عرس' }}>💍 عرس</label>
+        <label class="type-pill"><input type="radio" name="type" value="خطوبة" {{ 'checked' if edit_item and edit_item.type == 'خطوبة' }}>💮 خطوبة</label>
+      <label class="type-pill"><input type="radio" name="type" value="أخرى" {{ 'checked' if edit_item and edit_item.type == 'أخرى' }}>📌 أخرى</label>
+    </div>
+  </div>
+    <div class="field">
+    <label>اسم المناسبة</label>
+    <input type="text" name="name" placeholder="مثلا: عيد ميلاد ملاك" value="{{ edit_item.name if edit_item else '' }}" required>
+  </div>
+    <div class="field">
+      <label>امتى موعدها؟</label>
+      <input type="date" name="event_date" dir="ltr" value="{{ edit_item.event_date.isoformat() if edit_item else '' }}" required>
+  </div>
+    <div class="field">
+      <label>امتى تبي نذكركم؟</label>
+      <div class="type-picker">
+        <label class="type-pill"><input type="checkbox" name="remind_month" value="1" {{ 'checked' if edit_item and edit_item.remind_month }}>قبل شهر</label>
+        <label class="type-pill"><input type="checkbox" name="remind_week" value="1" {{ 'checked' if edit_item and edit_item.remind_week }}>قبل أسبوع</label>
+      <label class="type-pill"><input type="checkbox" name="remind_day" value="1" {{ 'checked' if not edit_item or edit_item.remind_day }}>يوم المناسبة</label>
+      </div>
+  </div>
+  <button type="submit" class="btn btn-primary"><i class="ti ti-{{ 'check' if edit_item else 'plus' }}"></i> {{ 'حفظ التعديل' if edit_item else 'إضافة' }}</button>
+{% if edit_item %}<a href="{{ url_for('events', y=year, m=month) }}" class="btn btn-ghost" style="display:block; text-align:center; margin-top:8px; text-decoration:none;">إلغاء</a>{% endif %}
+</form>
+
+<div class="cal-header">
+    <a class="cal-nav" href="{{ url_for('events', y=prev_year, m=prev_month) }}"><i class="ti ti-chevron-right"></i></a>
+    <span class="cal-title">{{ month_name }} {{ year }}</span>
+  <a class="cal-nav" href="{{ url_for('events', y=next_year, m=next_month) }}"><i class="ti ti-chevron-left"></i></a>
+</div>
+
+<div class="cal-grid">
+{% for wd in weekdays %}<div class="cal-weekday">{{ wd }}</div>{% endfor %}
+{% for week in weeks %}
+{% for cell in week %}
+{% if cell is none %}
+      <div class="cal-day empty"></div>
+{% else %}
+      <a href="{{ url_for('events', y=year, m=month, day=cell.day) }}" class="cal-day {{ 'today' if year == today.year and month == today.month and cell.day == today.day else '' }} {{ 'selected' if selected_day == cell.day else '' }}">
+        <span>{{ cell.day }}</span>
+{% if cell.events %}
+        <span class="cal-dots">
+{% for ev in cell.events %}<span class="cal-dot cal-dot-{{ event_type_class.get(ev.type, 'other') }}"></span>{% endfor %}
+        </span>
+{% endif %}
+      </a>
+{% endif %}
+{% endfor %}
+{% endfor %}
+</div>
+
+{% if selected_day %}
+<p class="app-subtitle" style="margin-top:16px;">مناسبات يوم {{ selected_day }}/{{ month }}</p>
+{% for ev in selected_events %}
+<div class="list-row">
+  <span class="row-info" style="flex:1;">
+    <span class="item-name">{{ ev.name }}</span>
+    <span class="item-note">{{ ev.type }}</span>
+    </span>
+  <a href="{{ url_for('events', edit=ev.id, y=year, m=month) }}" class="delete-btn"><i class="ti ti-pencil"></i></a>
+    <form method="POST" action="{{ url_for('events_delete', item_id=ev.id) }}">
+    <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
+  </form>
+  </div>
+  {% else %}
+<p class="app-subtitle">ما فيه مناسبات هاليوم</p>
+{% endfor %}
+{% endif %}
+
+<p class="app-subtitle" style="margin-top:16px;">المناسبات القادمة</p>
+{% for ev in upcoming_events %}
+<div class="list-row">
+  <span class="row-info" style="flex:1;">
+    <span class="item-name">{{ ev.name }}</span>
+    <span class="item-note">{{ ev.type }} - {{ ev.event_date.strftime('%d/%m/%Y') }} · باقي {{ ev.days_remaining }} يوم</span>
+    </span>
+  <a href="{{ url_for('events', edit=ev.id) }}" class="delete-btn"><i class="ti ti-pencil"></i></a>
+    <form method="POST" action="{{ url_for('events_delete', item_id=ev.id) }}">
+      <button type="submit" class="delete-btn"><i class="ti ti-x"></i></button>
+  </form>
+  </div>
+  {% else %}
+  <p class="app-subtitle">ما فيه مناسبات قادمة</p>
+  {% endfor %}
+
+  {% endblock %}
