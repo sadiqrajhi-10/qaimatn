@@ -149,6 +149,11 @@ setInterval(function () {
   var active = document.activeElement;
   var tag = active ? active.tagName : '';
   if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') return;
+  var hasUnsavedInput = false;
+document.querySelectorAll('form.add-form input[type="text"], form.add-form input[type="date"], form.add-form input[type="number"], form.add-form input[type="datetime-local"], form.add-form textarea').forEach(function (el) {
+    if (el.value && el.value.trim() !== '') hasUnsavedInput = true;
+});
+  if (hasUnsavedInput) return;
   location.reload();
 }, 15000);
   (function () { var f = document.querySelector('form.add-form[action*="/edit/"]'); if (!f) return; var d = document.createElement('div'); d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:790;'; d.onclick = function () { location.href = location.pathname; }; document.body.appendChild(d); document.body.style.overflow = 'hidden'; })();
