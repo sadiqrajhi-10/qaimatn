@@ -2,13 +2,13 @@ import json as json_lib
 import uuid
 import random
 import requests
-from datetime import datetime, timedelta, timezone
+import calendar
 from functools import wraps
 
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 
 from config import Config
-from models import db, ShoppingItem, WishlistItem, MealProposal, SharedNote, PushSubscription, Task, now_utc
+from models import db, ShoppingItem, WishlistItem, MealProposal, SharedNote, PushSubscription, Task, Event, now_utc
 
 try:
     from pywebpush import webpush, WebPushException
@@ -527,7 +527,9 @@ def cron_reminders():
         title, body = random_reminder(TASK_REMINDER_TITLES, TASK_REMINDER_BODIES, task.name)
         notify_all_users(title, body)
         task.reminded = True
-    db.session.commit()
+    sent_events = send_event_reminders()
+    db.session.commit()    
+    return jsonify({"ok": True, "sent": len(due) + len(due_tasks) + sent_events})
     return jsonify({"ok": True, "sent": len(due) + len(due_tasks)})
 
 
